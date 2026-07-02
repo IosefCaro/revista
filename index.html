@@ -5,676 +5,980 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Revista Institucional – Colegio Iosef Caro</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap');
 
 :root {
-  --navy: #1A2848;
-  --gold: #C9A84C;
-  --gold-dk: #8a6c1f;
-  --gold-pale: #F5EDD0;
-  --paper: #FAF7F1;
-  --paper-dk: #F0E8D8;
-  --ink: #1A1A2E;
-  --muted: #6B6B8A;
-  --rule: #D4C9A8;
-  --white: #fff;
+  --navy:#1A2848; --navy-dk:#0E1628;
+  --gold:#C9A84C; --gold-dk:#8A6420; --gold-lt:#F5EDD0;
+  --paper:#FAF7F1; --paper-dk:#F0E8D8; --paper-rule:#D4C9A8;
+  --ink:#1A1A2E; --ink-mid:#38385A; --muted:#6B6B8A;
+  --white:#fff;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'Lato', sans-serif; background: #0E1628; color: var(--ink);
-  min-height: 100vh; overscroll-behavior: none;
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--navy-dk);font-family:'Lato',sans-serif}
+img{display:block;object-fit:cover}
+
+/* ── LOADING ── */
+#loading{
+  position:fixed;inset:0;background:var(--navy-dk);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:16px;z-index:9999;transition:opacity .5s;
+}
+#loading .spin{width:42px;height:42px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);border-radius:50%;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading p{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:15px}
+
+/* ── EMPTY ── */
+#empty{
+  display:none;position:fixed;inset:0;
+  align-items:center;justify-content:center;
+  font-family:'Playfair Display',serif;font-style:italic;font-size:17px;color:rgba(255,255,255,.35);
+  text-align:center;padding:40px;
 }
 
-/* LOADING */
-#loading {
-  position: fixed; inset: 0; background: #0E1628;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 16px; z-index: 9999; transition: opacity .4s;
-}
-#loading .spin {
-  width: 40px; height: 40px; border: 3px solid rgba(201,168,76,.2);
-  border-top-color: var(--gold); border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-#loading p { font-family: 'Playfair Display', serif; font-style: italic; color: var(--gold); font-size: 15px; }
-
+/* ── PREVIEW BANNER ── */
 .preview-banner{
-  position:sticky;top:0;z-index:200;background:#C89A4C;color:#1A1A2E;
-  font-family:'Lato',sans-serif;font-weight:900;font-size:12px;letter-spacing:.5px;
-  text-align:center;padding:10px 14px;text-transform:uppercase;
+  position:fixed;top:0;left:0;right:0;z-index:1000;
+  background:#C89A4C;color:#0E1628;font-family:'Lato',sans-serif;
+  font-size:11px;font-weight:900;letter-spacing:1px;text-transform:uppercase;
+  text-align:center;padding:9px 14px;
 }
 
-.empty-state {
-  min-height: 100vh; display:flex; align-items:center; justify-content:center;
-  text-align: center; padding: 60px 20px; color: rgba(255,255,255,.4);
+/* ── TOPBAR ── */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:500;height:52px;
+  background:rgba(14,22,40,.96);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(201,168,76,.2);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;gap:12px;
 }
-.empty-state p { font-family: 'Playfair Display', serif; font-size: 17px; font-style: italic; }
+.topbar-brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.topbar-brand img{height:28px}
+.topbar-brand-name{
+  font-family:'Playfair Display',serif;font-size:13px;font-weight:700;
+  font-style:italic;color:rgba(255,255,255,.9);
+}
+.topbar-center{
+  flex:1;display:flex;justify-content:center;
+}
+.ed-select{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.85);
+  border:1px solid rgba(201,168,76,.3);border-radius:20px;
+  padding:7px 18px;font-family:'Lato',sans-serif;
+  font-size:10.5px;font-weight:700;cursor:pointer;max-width:280px;width:100%;
+}
+.ed-select option{background:var(--navy)}
+.topbar-nav{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.topbar-btn{
+  background:none;border:1px solid rgba(201,168,76,.3);color:var(--gold);
+  font-family:'Lato',sans-serif;font-size:9.5px;font-weight:900;letter-spacing:1.5px;
+  text-transform:uppercase;padding:6px 14px;border-radius:20px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.topbar-btn:hover{background:var(--gold);color:var(--navy-dk)}
 
-.mag-app { display:none; flex-direction: column; min-height: 100vh; }
-
-.mag-topbar {
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 14px 22px; gap:12px; flex-wrap:wrap;
-  background: linear-gradient(160deg,#0E1628 0%,var(--navy) 100%);
-  border-bottom: 1px solid rgba(201,168,76,.2);
-}
-.mag-brand { display:flex; align-items:center; gap:10px; }
-.mag-brand img { height: 26px; }
-.mag-brand span {
-  font-family:'Playfair Display',serif; font-weight:700; font-style:italic;
-  font-size:14px; color:#fff;
-}
-.mag-select {
-  background: rgba(255,255,255,.06); color: #fff; border: 1px solid rgba(201,168,76,.35);
-  border-radius: 20px; padding: 7px 16px; font-family:'Lato',sans-serif;
-  font-size: 10.5px; font-weight: 700; letter-spacing: .5px; cursor:pointer;
-  max-width: 260px;
-}
-.mag-select option { background: var(--navy); color: #fff; }
-
-.mag-stage {
-  flex: 1; display:flex; align-items:center; justify-content:center;
-  gap: 12px; padding: 22px 10px; position: relative; min-height: 0;
-}
-.mag-arrow {
-  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
-  border: 1px solid rgba(201,168,76,.35); background: rgba(255,255,255,.04);
-  color: var(--gold); font-size: 20px; cursor: pointer;
-  display:flex; align-items:center; justify-content:center;
-  transition: all .15s; z-index: 5;
-}
-.mag-arrow:hover:not(:disabled) { background: var(--gold); color: #0E1628; }
-.mag-arrow:disabled { opacity: .22; cursor: default; }
-
-.mag-viewport {
-  position: relative; overflow: hidden; border-radius: 8px; background: var(--paper);
-  box-shadow: 0 30px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(201,168,76,.15);
-  flex-shrink: 0;
-}
-.mag-track {
-  display: flex; height: 100%;
-  transition: transform .5s cubic-bezier(.65,0,.35,1);
-  will-change: transform;
-}
-.mag-page {
-  flex: 0 0 100%; height: 100%; overflow-y: auto; overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; background: var(--paper); position: relative;
-}
-.page-inner { padding: 26px 24px 28px; min-height: 100%; display:flex; flex-direction:column; }
-
-.mag-footer {
-  display:flex; align-items:center; justify-content:center; gap:18px;
-  padding: 6px 20px 22px; flex-wrap:wrap;
-}
-.mag-mini-btn {
-  background:none; border: 1px solid rgba(201,168,76,.3); color: var(--gold);
-  font-family:'Lato',sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; padding: 8px 16px; border-radius: 20px; cursor: pointer;
-  transition: all .15s;
-}
-.mag-mini-btn:hover { background: var(--gold); color: #0E1628; }
-.mag-progress-wrap { display:flex; flex-direction:column; align-items:center; gap:6px; min-width: 140px; }
-.mag-progress { width: 160px; height: 3px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
-.mag-progress-fill { height: 100%; background: var(--gold); transition: width .35s; }
-.mag-page-num { font-family:'Lato',sans-serif; font-size: 9.5px; letter-spacing: 1.5px; color: rgba(255,255,255,.5); }
-
-.page-cover .page-inner { padding: 0; position: relative; height: 100%; }
-.cover-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-.cover-img-fallback {
-  position:absolute; inset:0; background: linear-gradient(160deg,#1A2848,#0E1628);
-  display:flex; align-items:center; justify-content:center; font-size: 90px; color: rgba(201,168,76,.18);
-  font-family:'Playfair Display',serif;
-}
-.cover-overlay {
-  position:absolute; inset:0;
-  background: linear-gradient(180deg, rgba(14,22,40,.1) 0%, rgba(14,22,40,.45) 50%, rgba(14,22,40,.94) 100%);
-}
-.cover-content { position:absolute; left:0; right:0; bottom:0; padding: 26px 24px 30px; color:#fff; }
-.cover-badge {
-  font-family:'Lato',sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 3px;
-  text-transform: uppercase; color: var(--gold); margin-bottom: 10px;
-}
-.cover-title {
-  font-family:'Playfair Display',serif; font-weight: 900; font-size: clamp(24px,7vw,34px);
-  line-height: 1.05; margin-bottom: 8px;
-}
-.cover-sub {
-  font-family:'EB Garamond',serif; font-style: italic; font-size: 15px;
-  color: rgba(255,255,255,.78); margin-bottom: 14px;
-}
-.cover-meta {
-  display:flex; gap:16px; flex-wrap:wrap; font-size: 9.5px; letter-spacing: 1px;
-  text-transform: uppercase; color: rgba(255,255,255,.6);
-  border-top: 1px solid rgba(255,255,255,.2); padding-top: 12px;
-}
-.cover-hint {
-  position:absolute; top:16px; right:18px; font-family:'Lato',sans-serif; font-size: 9px;
-  letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.6);
+/* ── STAGE ── */
+.stage{
+  position:fixed;top:52px;left:0;right:0;bottom:56px;
+  display:flex;align-items:center;justify-content:center;
+  padding:20px 12px;gap:10px;
 }
 
-.indice-titulo { font-family:'Playfair Display',serif; font-weight: 900; font-size: 23px; color: var(--ink); margin-bottom: 3px; }
-.indice-sub {
-  font-family:'Lato',sans-serif; font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
+/* Flechas de navegación */
+.nav-arrow{
+  width:44px;height:44px;border-radius:50%;flex-shrink:0;
+  border:1px solid rgba(201,168,76,.3);background:rgba(255,255,255,.04);
+  color:var(--gold);font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .18s;user-select:none;z-index:10;
 }
-.indice-grupo-titulo {
-  font-family:'Lato',sans-serif; font-size: 9px; font-weight: 900; letter-spacing: 2px;
-  text-transform: uppercase; margin: 16px 0 6px;
+.nav-arrow:hover:not(:disabled){background:var(--gold);color:var(--navy-dk)}
+.nav-arrow:disabled{opacity:.18;cursor:default}
+
+/* ── BOOK ── */
+.book-wrap{
+  position:relative;flex:1;max-width:900px;height:100%;
+  display:flex;align-items:center;justify-content:center;
 }
-.indice-item {
-  display:flex; align-items:baseline; gap: 10px; width: 100%; text-align:left;
-  background:none; border:none; border-bottom: 1px dotted var(--rule);
-  padding: 9px 0; cursor: pointer; font-family:'EB Garamond',serif;
-}
-.indice-item:hover .indice-item-titulo { color: var(--gold-dk); }
-.indice-item-titulo { flex:1; font-size: 14.5px; color: var(--ink); line-height:1.3; }
-.indice-item-pag {
-  font-family:'Lato',sans-serif; font-size: 10.5px; color: var(--muted); font-weight: 700; flex-shrink:0;
-}
-.indice-vacio {
-  color: var(--muted); font-family:'EB Garamond',serif; font-style: italic; font-size: 14px;
-  padding: 24px 0; text-align:center;
+.book{
+  position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,.65),0 0 0 1px rgba(201,168,76,.12);
 }
 
-.page-articulo.tipo-comunicado .page-inner,
-.page-articulo.tipo-aviso .page-inner { border-left: 5px solid var(--gold); }
-.pg-kicker {
-  display:flex; align-items:center; gap:8px; font-family:'Lato',sans-serif;
-  font-size: 8.5px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;
-  margin-bottom: 10px;
-}
-.pg-kicker::after { content:''; flex:1; max-width: 28px; height: 1px; background: currentColor; opacity: .4; }
-.pg-titulo {
-  font-family:'Playfair Display',serif; font-weight: 900; font-size: clamp(19px,4.5vw,24px);
-  line-height: 1.12; color: var(--ink); margin-bottom: 8px;
-}
-.pg-bajada {
-  font-family:'EB Garamond',serif; font-style: italic; font-size: 14px; line-height: 1.55;
-  color: #38385A; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
-}
-.pg-cuerpo { font-family:'EB Garamond',serif; font-size: 14px; line-height: 1.75; color: var(--ink); flex:1; }
-.pg-parrafos p { margin-bottom: 10px; }
-.pg-parrafos p + p { text-indent: 1.1em; }
-.pg-footer {
-  margin-top: 18px; padding-top: 12px; border-top: 1px solid var(--rule);
-  display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px;
-  font-family:'Lato',sans-serif; font-size: 9.5px; font-weight: 700; letter-spacing: 1px;
-  text-transform: uppercase; color: var(--muted);
+/* SOMBRA libro */
+.book::after{
+  content:'';position:absolute;bottom:-18px;left:5%;right:5%;height:22px;
+  background:radial-gradient(ellipse,rgba(0,0,0,.55) 0%,transparent 75%);
+  pointer-events:none;
 }
 
-.bloque-imagen { margin: 16px 0; }
-.bloque-imagen.layout-full img { width:100%; border-radius: 6px; display:block; }
-.bloque-imagen.layout-left, .bloque-imagen.layout-right { width: 48%; margin-top: 4px; margin-bottom: 12px; }
-.bloque-imagen.layout-left { float:left; margin-right: 16px; }
-.bloque-imagen.layout-right { float:right; margin-left: 16px; }
-.bloque-imagen.layout-left img, .bloque-imagen.layout-right img { width:100%; border-radius: 6px; display:block; }
-.bloque-imagen figcaption {
-  font-family:'Lato',sans-serif; font-size: 10.5px; font-style: italic; color: var(--muted);
-  margin-top: 5px; line-height: 1.5;
-}
-.bloque-video { margin: 16px 0; clear: both; }
-.video-embed {
-  position:relative; width:100%; padding-bottom:56.25%; height:0; overflow:hidden;
-  border-radius: 6px; background:#000;
-}
-.video-embed iframe, .video-embed video { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
-.video-embed video { object-fit: contain; background:#000; }
-.bloque-video figcaption {
-  font-family:'Lato',sans-serif; font-size: 10.5px; font-style: italic; color: var(--muted);
-  margin-top: 5px; line-height: 1.5;
-}
-.video-fallback-link {
-  display:inline-block; padding: 9px 15px; border-radius: 6px; background: var(--gold);
-  color:#fff; font-family:'Lato',sans-serif; font-size: 11.5px; font-weight: 700; text-decoration:none;
+/* Lomo central */
+.book-spine{
+  position:absolute;top:0;bottom:0;width:10px;
+  left:50%;transform:translateX(-50%);z-index:30;
+  background:linear-gradient(to right,rgba(0,0,0,.25) 0%,rgba(201,168,76,.8) 30%,rgba(245,237,208,.9) 50%,rgba(201,168,76,.8) 70%,rgba(0,0,0,.15) 100%);
+  box-shadow:0 0 14px rgba(201,168,76,.35);
 }
 
-.page-fin .page-inner { align-items:center; justify-content:center; text-align:center; gap: 8px; }
-.fin-estrella { font-size: 32px; color: var(--gold); margin-bottom: 4px; }
-.fin-titulo { font-family:'Playfair Display',serif; font-style: italic; font-weight: 700; font-size: 19px; color: var(--ink); }
-.fin-sub { font-family:'Lato',sans-serif; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+/* Sombra interna páginas */
+.page-shadow-l{
+  position:absolute;top:0;bottom:0;left:50%;width:28px;margin-left:5px;
+  background:linear-gradient(to right,rgba(0,0,0,.22),transparent);
+  pointer-events:none;z-index:25;
+}
+.page-shadow-r{
+  position:absolute;top:0;bottom:0;right:50%;width:28px;margin-right:5px;
+  background:linear-gradient(to left,rgba(0,0,0,.18),transparent);
+  pointer-events:none;z-index:25;
+}
 
-@media (max-width: 480px) {
-  .mag-arrow { width: 34px; height: 34px; font-size: 17px; }
-  .mag-stage { gap: 6px; padding: 14px 4px; }
-  .mag-topbar { padding: 12px 14px; }
-  .page-inner { padding: 20px 18px 22px; }
+/* ── PÁGINAS ── */
+.pages-container{
+  display:flex;width:100%;height:100%;
+  perspective:2000px;
+}
+
+/* Una sola "hoja" = dos caras */
+.page-pair{
+  display:flex;width:100%;height:100%;flex-shrink:0;
+}
+
+/* Cada cara de la página */
+.pg{
+  width:50%;height:100%;overflow:hidden;position:relative;
+  background:var(--paper);
+}
+.pg-inner{
+  padding:28px 26px 36px;height:100%;display:flex;flex-direction:column;
+  overflow-y:auto;overflow-x:hidden;
+  /* scroll suave para artículos largos */
+  -webkit-overflow-scrolling:touch;
+}
+/* Scroll invisible */
+.pg-inner::-webkit-scrollbar{width:3px}
+.pg-inner::-webkit-scrollbar-thumb{background:var(--paper-rule);border-radius:2px}
+
+/* Folio (número de página) */
+.folio{
+  position:absolute;bottom:10px;
+  font-family:'Lato',sans-serif;font-size:7px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+}
+.folio-l{left:26px}.folio-r{right:26px}
+
+/* Textura papel */
+.pg::before{
+  content:'';position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.4;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+}
+.pg > *{position:relative;z-index:1}
+
+/* ── FLIP ANIMATION ── */
+@keyframes flipL{
+  0%  {transform:rotateY(0deg)}
+  100%{transform:rotateY(-180deg)}
+}
+@keyframes flipR{
+  0%  {transform:rotateY(0deg)}
+  100%{transform:rotateY(180deg)}
+}
+.flipping-out-l{
+  animation:flipL var(--flip-dur,.55s) cubic-bezier(.645,.045,.355,1) forwards;
+  transform-origin:right center;transform-style:preserve-3d;
+  position:absolute;left:0;width:50%;height:100%;z-index:50;
+  backface-visibility:hidden;
+}
+.flipping-out-r{
+  animation:flipR var(--flip-dur,.55s) cubic-bezier(.645,.045,.355,1) forwards;
+  transform-origin:left center;transform-style:preserve-3d;
+  position:absolute;right:0;width:50%;height:100%;z-index:50;
+  backface-visibility:hidden;
+}
+
+/* ── FOOTBAR ── */
+.footbar{
+  position:fixed;bottom:0;left:0;right:0;height:56px;
+  background:rgba(14,22,40,.96);backdrop-filter:blur(12px);
+  border-top:1px solid rgba(201,168,76,.15);
+  display:flex;align-items:center;justify-content:center;gap:20px;padding:0 16px;
+}
+.foot-btn{
+  background:none;border:1px solid rgba(201,168,76,.25);color:rgba(201,168,76,.75);
+  font-family:'Lato',sans-serif;font-size:9.5px;font-weight:900;letter-spacing:1.5px;
+  text-transform:uppercase;padding:7px 16px;border-radius:20px;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.foot-btn:hover{background:var(--gold);color:var(--navy-dk);border-color:var(--gold)}
+.progress-wrap{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:120px}
+.progress-bar{width:160px;height:2px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:var(--gold);transition:width .4s}
+.page-num{font-family:'Lato',sans-serif;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4)}
+
+/* ══════════════════════════════════
+   TIPOGRAFÍA EDITORIAL
+══════════════════════════════════ */
+.kicker{
+  font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:8px;
+}
+.kicker::after{content:'';flex:1;max-width:32px;height:1px;background:currentColor;opacity:.35}
+.headline{
+  font-family:'Playfair Display',serif;font-weight:900;line-height:1.06;
+  color:var(--ink);letter-spacing:-.3px;
+}
+.deck{
+  font-family:'EB Garamond',serif;font-style:italic;line-height:1.58;color:var(--ink-mid);
+}
+.byline{
+  font-family:'Lato',sans-serif;font-size:7.5px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);
+}
+.rule-double{
+  border:none;border-top:2.5px solid var(--ink);
+  height:5px;border-bottom:1px solid var(--ink);margin:10px 0;
+}
+.rule-thin{border:none;border-top:1px solid var(--paper-rule);margin:8px 0}
+.rule-gold{border:none;border-top:1px solid rgba(201,168,76,.5);margin:8px 0}
+
+/* Cuerpo de texto editorial */
+.body-text{
+  font-family:'EB Garamond',serif;font-size:13.5px;line-height:1.82;
+  color:var(--ink);text-align:justify;
+}
+.body-text p+p{text-indent:1.2em}
+/* Drop cap */
+.drop-cap::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.6em;font-weight:900;
+  float:left;line-height:.76;margin-right:5px;margin-top:4px;color:var(--gold);
+}
+/* Pull quote */
+.pq{
+  border-left:2.5px solid var(--gold);padding:4px 0 4px 12px;
+  margin:12px 0;font-family:'Playfair Display',serif;font-size:11px;
+  font-style:italic;line-height:1.42;color:var(--ink-mid);
+}
+.pq-attr{
+  display:block;margin-top:4px;font-family:'Lato',sans-serif;font-size:7px;
+  letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-style:normal;
+}
+
+/* Imagen dentro de artículo */
+.art-img-wrap{margin:10px 0}
+.art-img-wrap img{width:100%;border-radius:3px;display:block}
+.art-img-wrap.float-l{float:left;width:44%;margin-right:12px;margin-bottom:6px}
+.art-img-wrap.float-r{float:right;width:44%;margin-left:12px;margin-bottom:6px}
+.art-img-caption{
+  font-family:'Lato',sans-serif;font-size:8px;font-style:italic;
+  color:var(--muted);margin-top:4px;line-height:1.45;
+}
+.clearfix::after{content:'';display:table;clear:both}
+
+/* Video */
+.video-wrap{margin:10px 0;position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:5px;background:#000}
+.video-wrap iframe,.video-wrap video{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+.video-wrap video{object-fit:contain}
+
+/* ══════════════════════════════════
+   TAPA
+══════════════════════════════════ */
+.cover-page{
+  position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#0E1628 0%,var(--navy) 60%,#1E3060 100%);
+}
+.cover-page .pg-inner{padding:0}
+.cover-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+.cover-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(14,22,40,.15) 0%,rgba(14,22,40,.55) 45%,rgba(14,22,40,.95) 100%);
+}
+.cover-hebreo-bg{
+  position:absolute;top:0;right:-20px;font-size:340px;line-height:.8;
+  font-family:'Playfair Display',serif;color:rgba(201,168,76,.05);
+  pointer-events:none;user-select:none;
+}
+.cover-content{
+  position:absolute;left:0;right:0;bottom:0;padding:22px 22px 28px;color:#fff;
+}
+.cover-logo-line{
+  display:flex;align-items:center;gap:9px;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,.25);
+}
+.cover-logo-line img{height:24px;opacity:.9}
+.cover-logo-txt{font-family:'Lato',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.7)}
+.cover-badge{
+  font-family:'Lato',sans-serif;font-size:8.5px;font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:8px;
+}
+.cover-title{
+  font-family:'Playfair Display',serif;font-weight:900;
+  font-size:clamp(20px,5vw,30px);line-height:1.04;margin-bottom:7px;
+}
+.cover-sub{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:13.5px;
+  color:rgba(255,255,255,.75);margin-bottom:12px;line-height:1.5;
+}
+.cover-meta{
+  display:flex;gap:14px;font-family:'Lato',sans-serif;font-size:8.5px;
+  letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);
+  border-top:1px solid rgba(255,255,255,.15);padding-top:10px;flex-wrap:wrap;
+}
+.cover-hint{
+  position:absolute;bottom:28px;right:16px;
+  font-family:'Lato',sans-serif;font-size:8px;letter-spacing:1.5px;
+  text-transform:uppercase;color:rgba(255,255,255,.45);
+  animation:hintPulse 3s ease-in-out infinite;
+}
+@keyframes hintPulse{0%,100%{opacity:.3}50%{opacity:.9}}
+
+/* Página derecha de tapa = índice */
+.indice-titulo{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:22px;
+  color:var(--ink);margin-bottom:2px;
+}
+.indice-ed{
+  font-family:'Lato',sans-serif;font-size:8px;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid var(--paper-rule);
+}
+.indice-grupo{
+  font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:2px;
+  text-transform:uppercase;margin:12px 0 5px;
+}
+.indice-row{
+  display:flex;align-items:baseline;gap:5px;width:100%;text-align:left;
+  background:none;border:none;border-bottom:1px dotted var(--paper-rule);
+  padding:8px 0;cursor:pointer;font-family:'EB Garamond',serif;
+  transition:all .15s;
+}
+.indice-row:hover .ir-titulo{color:var(--gold-dk)}
+.ir-titulo{flex:1;font-size:13px;color:var(--ink);line-height:1.3;text-align:left}
+.ir-dots{flex:0 1 30px;border-bottom:1px dotted var(--paper-rule);height:1px;align-self:center}
+.ir-pag{font-family:'Lato',sans-serif;font-size:9.5px;font-weight:700;color:var(--muted);flex-shrink:0}
+
+/* ══════════════════════════════════
+   PÁGINA DE ARTÍCULO
+══════════════════════════════════ */
+.art-page-l .pg-inner,
+.art-page-r .pg-inner{padding:22px 20px 32px}
+
+/* Layout HERO: imagen ocupa media página */
+.hero-img-block{
+  width:calc(100% + 40px);margin:-22px -20px 16px;
+  height:38%;min-height:120px;overflow:hidden;flex-shrink:0;
+}
+.hero-img-block img{width:100%;height:100%;object-fit:cover}
+
+/* ══════════════════════════════════
+   PÁGINA FINAL
+══════════════════════════════════ */
+.fin-page .pg-inner{
+  align-items:center;justify-content:center;gap:10px;text-align:center;
+}
+.fin-star{font-size:34px;color:var(--gold);margin-bottom:2px}
+.fin-titulo{font-family:'Playfair Display',serif;font-style:italic;font-weight:700;font-size:18px;color:var(--ink)}
+.fin-sub{font-family:'Lato',sans-serif;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.fin-btn{
+  margin-top:16px;padding:8px 22px;border-radius:20px;border:1px solid var(--gold);
+  background:none;color:var(--gold);font-family:'Lato',sans-serif;font-size:9.5px;
+  font-weight:900;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;
+  transition:all .15s;
+}
+.fin-btn:hover{background:var(--gold);color:var(--navy-dk)}
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+@media(max-width:600px){
+  /* En mobile: UNA sola página a la vez (no doble) */
+  .book{width:100%!important}
+  .pg{width:100%!important}
+  .book-spine,.page-shadow-l,.page-shadow-r{display:none}
+  .single-mode .pg-r-wrap{display:none}
+  .nav-arrow{width:36px;height:36px;font-size:18px}
+  .topbar-brand-name{display:none}
+  .stage{padding:10px 4px}
 }
 </style>
 </head>
 <body>
-
-<div id="preview-banner-slot"></div>
 
 <div id="loading">
   <div class="spin"></div>
   <p>Cargando revista…</p>
 </div>
 
-<div class="empty-state" id="empty-state" style="display:none"><p>No hay ediciones publicadas aún.</p></div>
-
-<div class="mag-app" id="mag-app">
-  <header class="mag-topbar">
-    <div class="mag-brand">
-      <img src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="Logo" onerror="this.style.display='none'">
-      <span>Colegio Rabino Iosef Caro</span>
-    </div>
-    <select class="mag-select" id="edicion-switch" onchange="cambiarEdicionSwitch(this.value)"></select>
-  </header>
-
-  <div class="mag-stage">
-    <button class="mag-arrow" id="btn-prev" aria-label="Página anterior">‹</button>
-    <div class="mag-viewport" id="mag-viewport">
-      <div class="mag-track" id="mag-track"></div>
-    </div>
-    <button class="mag-arrow" id="btn-next" aria-label="Página siguiente">›</button>
-  </div>
-
-  <div class="mag-footer">
-    <button class="mag-mini-btn" onclick="irAIndice()">☰ Índice</button>
-    <div class="mag-progress-wrap">
-      <div class="mag-progress"><div class="mag-progress-fill" id="progress-fill"></div></div>
-      <div class="mag-page-num" id="page-indicator">1 / 1</div>
-    </div>
-    <button class="mag-mini-btn" onclick="irATapa()">📖 Tapa</button>
-  </div>
+<div id="empty" style="display:none">
+  <p id="empty-msg">No hay ediciones publicadas aún.</p>
 </div>
+
+<div id="preview-banner-slot"></div>
+
+<!-- TOPBAR -->
+<header class="topbar" id="topbar" style="display:none">
+  <div class="topbar-brand">
+    <img src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="Logo" onerror="this.style.display='none'">
+    <span class="topbar-brand-name">Colegio Rabino Iosef Caro</span>
+  </div>
+  <div class="topbar-center">
+    <select class="ed-select" id="ed-select" onchange="cambiarEdicion(this.value)"></select>
+  </div>
+  <div class="topbar-nav">
+    <button class="topbar-btn" onclick="irATapa()">📖 Tapa</button>
+    <button class="topbar-btn" onclick="irAIndice()">☰ Índice</button>
+  </div>
+</header>
+
+<!-- STAGE -->
+<div class="stage" id="stage" style="display:none">
+  <button class="nav-arrow" id="btn-prev" onclick="paginaAnterior()" disabled>‹</button>
+
+  <div class="book-wrap">
+    <div class="book" id="book">
+      <!-- Páginas se generan aquí -->
+      <div class="book-spine"></div>
+      <div class="page-shadow-l"></div>
+      <div class="page-shadow-r"></div>
+    </div>
+  </div>
+
+  <button class="nav-arrow" id="btn-next" onclick="paginaSiguiente()">›</button>
+</div>
+
+<!-- FOOTBAR -->
+<footer class="footbar" id="footbar" style="display:none">
+  <button class="foot-btn" onclick="paginaAnterior()" id="foot-prev">‹ Ant.</button>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="page-num" id="page-num">1 / 1</div>
+  </div>
+  <button class="foot-btn" onclick="paginaSiguiente()" id="foot-next">Sig. ›</button>
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, getDocs, getDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore, collection, doc, getDocs, getDoc,
+  query, orderBy, where
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
-  authDomain: "revista-1ac1c.firebaseapp.com",
-  projectId: "revista-1ac1c",
-  storageBucket: "revista-1ac1c.firebasestorage.app",
-  messagingSenderId: "137545616566",
-  appId: "1:137545616566:web:f74736d93682e2727dea17"
+const FC = {
+  apiKey:"AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
+  authDomain:"revista-1ac1c.firebaseapp.com",
+  projectId:"revista-1ac1c",
+  storageBucket:"revista-1ac1c.firebasestorage.app",
+  messagingSenderId:"137545616566",
+  appId:"1:137545616566:web:f74736d93682e2727dea17"
 };
+const app = initializeApp(FC);
+const db  = getFirestore(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
+// ══ CONSTANTES ══════════════════════════════════════════════
 const NIVELES = {
-  institucional: { label: 'Institucional', color: '#C9A84C', icon: '■' },
-  inicial:       { label: 'Nivel Inicial',    color: '#C07030', icon: '✦' },
-  primaria:      { label: 'Nivel Primario',   color: '#2A7A50', icon: '◆' },
-  secundaria:    { label: 'Nivel Secundario', color: '#2A50A0', icon: '▲' },
-  reshit:        { label: 'Reshit',           color: '#7030A0', icon: '✡' },
+  institucional:{label:'Institucional',color:'#C9A84C',icon:'■'},
+  inicial:      {label:'Nivel Inicial',  color:'#C07030',icon:'✦'},
+  primaria:     {label:'Nivel Primario', color:'#2A7A50',icon:'◆'},
+  secundaria:   {label:'Nivel Secundario',color:'#2A50A0',icon:'▲'},
+  reshit:       {label:'Reshit',         color:'#7030A0',icon:'✡'},
 };
+const TIPOS = {noticia:'Noticia',galeria:'Galería',proyecto:'Proyecto',evento:'Evento',comunicado:'Comunicado',aviso:'Aviso'};
+const NIVEL_ORDER = ['institucional','inicial','primaria','secundaria','reshit'];
 
-const TIPOS = {
-  noticia:      'Noticia',
-  galeria:      'Galería',
-  proyecto:     'Proyecto',
-  evento:       'Evento',
-  comunicado:   'Comunicado',
-  aviso:        'Aviso',
-};
+// ══ ESTADO ══════════════════════════════════════════════════
+let ediciones = [];
+let edActual  = null;
+let articulos = [];
+let spreads   = []; // cada spread = {l: PageDef, r: PageDef}
+let spreadIdx = 0;
+let flipping  = false;
+let esMobile  = window.innerWidth < 600;
 
-let todasEdiciones = [];
-let edicionActual = null;
-let articulosActuales = [];
-let paginas = [];
-let paginaActual = 0;
-let modoPreview = false;
-
+// ══ INIT ════════════════════════════════════════════════════
 async function init() {
   try {
-    const params = new URLSearchParams(location.search);
-    const previewId = params.get('previewEdicion');
+    const params     = new URLSearchParams(location.search);
+    const previewId  = params.get('previewEdicion');
 
     if (previewId) {
-      const sn = await getDoc(doc(db, 'ediciones', previewId));
-      if (!sn.exists()) {
-        ocultarLoading();
-        mostrarVacio('Esa edición no existe.');
-        return;
-      }
-      modoPreview = true;
-      todasEdiciones = [{ id: sn.id, ...sn.data() }];
-      mostrarBannerPreview();
-      await cargarEdicion(todasEdiciones[0]);
-      mostrarApp();
-      ocultarLoading();
-      return;
+      const sn = await getDoc(doc(db,'ediciones',previewId));
+      if (!sn.exists()) { mostrarEmpty('Edición no encontrada.'); return; }
+      document.getElementById('preview-banner-slot').innerHTML =
+        '<div class="preview-banner">👁 Vista previa — esta edición todavía NO está publicada</div>';
+      ediciones = [{id:sn.id,...sn.data()}];
+    } else {
+      const sn = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+      ediciones = sn.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.estado==='publicada');
+      if (!ediciones.length) { mostrarEmpty('No hay ediciones publicadas aún.'); return; }
     }
 
-    const snEdiciones = await getDocs(query(collection(db, 'ediciones'), orderBy('fechaInicio', 'desc')));
-    todasEdiciones = snEdiciones.docs
-      .map(d => ({ id: d.id, ...d.data() }))
-      .filter(e => e.estado === 'publicada');
-
-    if (!todasEdiciones.length) {
-      ocultarLoading();
-      mostrarVacio('No hay ediciones publicadas aún.');
-      return;
-    }
-
-    await cargarEdicion(todasEdiciones[0]);
+    renderEdSelect();
+    await cargarEdicion(ediciones[0]);
     mostrarApp();
     ocultarLoading();
-  } catch (e) {
+  } catch(e) {
     console.error(e);
-    ocultarLoading();
-    mostrarVacio('Error al cargar. Intentá de nuevo.');
+    mostrarEmpty('Error al cargar. Intentá de nuevo más tarde.');
   }
 }
 
-function mostrarVacio(msg) {
-  const el = document.getElementById('empty-state');
-  el.querySelector('p').textContent = msg;
+function mostrarEmpty(msg) {
+  ocultarLoading();
+  const el = document.getElementById('empty');
+  el.querySelector('#empty-msg').textContent = msg;
   el.style.display = 'flex';
 }
-
+function ocultarLoading() {
+  const l = document.getElementById('loading');
+  l.style.opacity = '0';
+  setTimeout(()=>l.remove(),500);
+}
 function mostrarApp() {
-  document.getElementById('mag-app').style.display = 'flex';
-  requestAnimationFrame(ajustarViewport);
+  ['topbar','stage','footbar'].forEach(id => document.getElementById(id).style.display = '');
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('stage').style.display  = 'flex';
+  document.getElementById('footbar').style.display = 'flex';
+  ajustarBook();
+  window.addEventListener('resize', ajustarBook);
 }
 
-async function cargarEdicion(edicion) {
-  edicionActual = edicion;
-
-  const snArts = await getDocs(
-    query(
-      collection(db, 'articulos'),
-      where('edicionId', '==', edicion.id),
-      where('estado', '==', 'publicado')
+// ══ CARGA DE DATOS ══════════════════════════════════════════
+async function cargarEdicion(ed) {
+  edActual = ed;
+  const sn = await getDocs(
+    query(collection(db,'articulos'),
+      where('edicionId','==',ed.id),
+      where('estado','==','publicado')
     )
   );
-  articulosActuales = snArts.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99));
+  articulos = sn.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(a.orden??99)-(b.orden??99));
 
-  construirPaginas();
-  renderPaginas();
-  renderEdicionSwitch();
+  construirSpreads();
+  renderizarLibro();
 }
 
-window.cambiarEdicionSwitch = async function(edId) {
-  const ed = todasEdiciones.find(e => e.id === edId);
-  if (!ed) return;
-  document.getElementById('mag-track').innerHTML = '';
+window.cambiarEdicion = async function(edId) {
+  const ed = ediciones.find(e=>e.id===edId);
+  if (!ed || ed.id === edActual?.id) return;
   await cargarEdicion(ed);
 };
 
-function renderEdicionSwitch() {
-  const sel = document.getElementById('edicion-switch');
-  sel.innerHTML = todasEdiciones.map(e =>
-    `<option value="${e.id}">${e.numero ? 'Ed. ' + e.numero + ' – ' : ''}Semana del ${formatFechaCorta(e.fechaInicio)}</option>`
+function renderEdSelect() {
+  const sel = document.getElementById('ed-select');
+  sel.innerHTML = ediciones.map(e =>
+    `<option value="${e.id}">${e.numero?'Ed. '+e.numero+' — ':''}Semana del ${fechaCorta(e.fechaInicio)}</option>`
   ).join('');
-  sel.value = edicionActual?.id || '';
 }
 
-function construirPaginas() {
-  paginas = [];
-  paginas.push({ tipo: 'cover' });
-  paginas.push({ tipo: 'indice' });
-  articulosActuales.forEach(art => paginas.push({ tipo: 'articulo', art }));
-  paginas.push({ tipo: 'fin' });
+// ══ CONSTRUCCIÓN DE SPREADS (pares de páginas) ═══════════════
+// Spread 0 = tapa (izq) + índice (der)
+// Spread 1..N = artículos (2 páginas cada uno: contenido L y R)
+// Spread final = página de cierre
+function construirSpreads() {
+  spreads = [];
+
+  // Spread 0: Tapa + Índice
+  spreads.push({tipo:'portada'});
+
+  // Artículos: cada artículo ocupa UN spread (L+R)
+  articulos.forEach((art, i) => {
+    spreads.push({tipo:'articulo', art, num: i});
+  });
+
+  // Cierre
+  spreads.push({tipo:'fin'});
+
+  spreadIdx = 0;
 }
 
-function renderPaginas() {
-  const track = document.getElementById('mag-track');
-  track.innerHTML = paginas.map(p => htmlPagina(p)).join('');
-  irAPagina(0, false);
+// ══ RENDERIZADO DEL LIBRO ═══════════════════════════════════
+function renderizarLibro() {
+  const book = document.getElementById('book');
+  // Quitar hojas previas (pero mantener spine y sombras)
+  book.querySelectorAll('.page-pair').forEach(el=>el.remove());
+
+  spreads.forEach((sp, i) => {
+    const pair = document.createElement('div');
+    pair.className = 'page-pair';
+    pair.id = 'spread-' + i;
+    pair.style.display = 'none';
+    pair.style.width = '100%';
+    pair.style.height = '100%';
+    pair.innerHTML = buildSpreadHTML(sp, i);
+    book.appendChild(pair);
+  });
+
+  irASpread(0, false);
 }
 
-function htmlPagina(p) {
-  if (p.tipo === 'cover')    return htmlPortada();
-  if (p.tipo === 'indice')   return htmlIndice();
-  if (p.tipo === 'articulo') return htmlArticuloPagina(p.art);
-  if (p.tipo === 'fin')      return htmlFin();
+function buildSpreadHTML(sp, i) {
+  if (sp.tipo === 'portada') return buildPortada(i);
+  if (sp.tipo === 'articulo') return buildArticulo(sp.art, i);
+  if (sp.tipo === 'fin')     return buildFin(i);
   return '';
 }
 
-function imagenPortada() {
-  const conImg = articulosActuales.find(a => a.imagenUrl && a.imagenUrl.trim());
-  return conImg ? driveUrl(conImg.imagenUrl) : '';
-}
+// ── PORTADA + ÍNDICE ─────────────────────────────────────────
+function buildPortada(i) {
+  const ed = edActual;
+  const coverImg = driveUrl(ed?.portadaImagenUrl || '');
+  const logoUrl  = ed?.logoUrl || 'https://i.ibb.co/hF7Sqzw5/Logo-blanco.png';
 
-function htmlPortada() {
-  const img = imagenPortada();
-  return `
-    <div class="mag-page page-cover">
-      <div class="page-inner">
-        ${img
-          ? `<img class="cover-img" src="${img}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'cover-img-fallback',textContent:'✡'}))">`
-          : `<div class="cover-img-fallback">✡</div>`}
-        <div class="cover-overlay"></div>
-        <div class="cover-hint">Deslizá o tocá las flechas ›</div>
-        <div class="cover-content">
-          <div class="cover-badge">Edición ${edicionActual?.numero || ''}</div>
-          <div class="cover-title">${edicionActual?.titulo || 'Revista Institucional'}</div>
-          <div class="cover-sub">${edicionActual?.subtitulo || 'Colegio Rabino Iosef Caro'}</div>
-          <div class="cover-meta">
-            <span>Semana del ${formatFecha(edicionActual?.fechaInicio)}</span>
-            <span>${articulosActuales.length} nota${articulosActuales.length !== 1 ? 's' : ''}</span>
-          </div>
+  // Página izquierda: TAPA
+  let tapaHTML = `
+    <div class="pg cover-page">
+      ${coverImg ? `<img class="cover-img" src="${coverImg}" alt="" onerror="this.style.display='none'">` : ''}
+      <div class="cover-overlay"></div>
+      <div class="cover-hebreo-bg">${ed?.hebreo||'בס״ד'}</div>
+      <div class="cover-content">
+        <div class="cover-logo-line">
+          <img src="${logoUrl}" alt="Logo" onerror="this.style.display='none'" style="height:22px">
+          <span class="cover-logo-txt">${ed?.institucion||'Colegio Rabino Iosef Caro'}</span>
+        </div>
+        <div class="cover-badge">Edición ${ed?.numero||''} &nbsp;·&nbsp; ${ed?.mes||''} ${ed?.anio||''}</div>
+        <div class="cover-title">${ed?.titulo||'Revista Institucional'}</div>
+        <div class="cover-sub">${ed?.subtitulo||'"Formamos Iehudim íntegros para el mañana"'}</div>
+        <div class="cover-meta">
+          <span>Semana del ${fechaLarga(ed?.fechaInicio)}</span>
+          <span>${articulos.length} nota${articulos.length!==1?'s':''}</span>
         </div>
       </div>
-    </div>`;
-}
+      <div class="cover-hint">Girá la página ›</div>
+      <div class="folio folio-l">1</div>
+    </div>
+  `;
 
-function htmlIndice() {
+  // Página derecha: ÍNDICE
+  let indiceContent = '';
   const grupos = {};
-  const orden = ['institucional','inicial','primaria','secundaria','reshit'];
-  articulosActuales.forEach((a, i) => {
-    const n = a.nivel || 'institucional';
-    (grupos[n] = grupos[n] || []).push({ ...a, _pagina: i + 2 });
+  articulos.forEach((a,idx) => {
+    const n = a.nivel||'institucional';
+    (grupos[n] = grupos[n]||[]).push({...a, _sp: idx+1});
   });
-  const clavesOrdenadas = Object.keys(grupos).sort((a,b) => orden.indexOf(a) - orden.indexOf(b));
+  const nivelesPresentes = NIVEL_ORDER.filter(n=>grupos[n]);
 
-  let html = `
-    <div class="mag-page page-indice">
-      <div class="page-inner">
-        <div class="indice-titulo">Índice</div>
-        <div class="indice-sub">${edicionActual?.titulo || ''}</div>`;
-
-  if (!articulosActuales.length) {
-    html += `<div class="indice-vacio">Todavía no hay notas cargadas en esta edición.</div>`;
+  if (!articulos.length) {
+    indiceContent = `<div style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:var(--muted);padding:20px 0;text-align:center">Todavía no hay notas en esta edición.</div>`;
   } else {
-    clavesOrdenadas.forEach(nKey => {
-      const niv = NIVELES[nKey] || { label: nKey, color: '#888', icon: '·' };
-      html += `<div class="indice-grupo-titulo" style="color:${niv.color}">${niv.icon} ${niv.label}</div>`;
+    nivelesPresentes.forEach(nKey => {
+      const niv = NIVELES[nKey] || {label:nKey,color:'#888',icon:'·'};
+      indiceContent += `<div class="indice-grupo" style="color:${niv.color}">${niv.icon}&nbsp; ${niv.label}</div>`;
       grupos[nKey].forEach(a => {
-        html += `
-          <button class="indice-item" onclick="irAPagina(${a._pagina})">
-            <span class="indice-item-titulo">${a.titulo || 'Sin título'}</span>
-            <span class="indice-item-pag">${String(a._pagina + 1).padStart(2,'0')}</span>
+        indiceContent += `
+          <button class="indice-row" onclick="irASpread(${a._sp})">
+            <span class="ir-titulo">${a.titulo||'Sin título'}</span>
+            <span class="ir-dots"></span>
+            <span class="ir-pag">${String((a._sp)*2+1).padStart(2,'0')}</span>
           </button>`;
       });
     });
   }
 
-  html += `</div></div>`;
-  return html;
+  const indiceHTML = `
+    <div class="pg" style="border-left:1px solid var(--paper-rule)">
+      <div class="pg-inner">
+        <div class="indice-titulo">Índice</div>
+        <div class="indice-ed">${ed?.titulo||''} &nbsp;·&nbsp; ${ed?.numero?'N.° '+ed.numero:''}</div>
+        ${indiceContent}
+      </div>
+      <div class="folio folio-r">2 · Índice</div>
+    </div>
+  `;
+
+  return tapaHTML + indiceHTML;
 }
 
-function htmlArticuloPagina(art) {
-  const niv = NIVELES[art.nivel] || { label: art.nivel, color: '#888', icon: '·' };
-  const tipo = TIPOS[art.tipo] || art.tipo || '';
-  const tipoClass = ['comunicado','aviso'].includes(art.tipo) ? ` tipo-${art.tipo}` : '';
-  return `
-    <div class="mag-page page-articulo${tipoClass}">
-      <div class="page-inner">
-        <div class="pg-kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
-        <div class="pg-titulo">${art.titulo || ''}</div>
-        ${art.bajada ? `<div class="pg-bajada">${art.bajada}</div>` : ''}
-        <div class="pg-cuerpo">${renderContenidoCompleto(art)}</div>
-        <div class="pg-footer">
-          <span>${art.autor || ''}${art.sala ? ' · ' + art.sala : ''}</span>
-          <span>${art.fecha || ''}</span>
+// ── ARTÍCULO ─────────────────────────────────────────────────
+function buildArticulo(art, spreadI) {
+  const niv   = NIVELES[art.nivel] || {label:art.nivel,color:'#888',icon:'·'};
+  const tipo  = TIPOS[art.tipo]    || art.tipo || '';
+  const pgL   = spreadI * 2 + 1;
+  const pgR   = pgL + 1;
+  const hasPQ = art.pullquote && art.pullquote.trim();
+
+  // Imagen principal
+  const imgUrl = driveUrl(art.imagenUrl||'');
+
+  // Cuerpo de texto
+  const cuerpoParrafos = buildCuerpo(art);
+
+  // PÁGINA IZQUIERDA
+  // Layout hero si tiene imagen: foto en la parte superior de la página
+  let paginaIzq = '';
+  if (imgUrl) {
+    paginaIzq = `
+      <div class="pg art-page-l">
+        <div class="pg-inner">
+          <div class="hero-img-block">
+            <img src="${imgUrl}" alt="${esc(art.titulo||'')}" onerror="this.parentElement.style.display='none'">
+          </div>
+          <div class="kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+          <div class="headline" style="font-size:clamp(17px,3.5vw,22px);margin-bottom:7px">${art.titulo||''}</div>
+          ${art.bajada?`<div class="deck" style="font-size:13px;margin-bottom:8px">${art.bajada}</div>`:''}
+          <hr class="rule-double">
+          <div class="byline" style="margin-bottom:10px">✍ ${art.autor||''}${art.sala?' · '+art.sala:''} ${art.fecha?' · '+art.fecha:''}</div>
+          <div class="body-text drop-cap">${cuerpoParrafos.slice(0,1).join('')}</div>
+        </div>
+        <div class="folio folio-l">${pgL}</div>
+      </div>
+    `;
+  } else {
+    // Sin imagen: texto más grande, más elegante
+    paginaIzq = `
+      <div class="pg art-page-l">
+        <div class="pg-inner">
+          <div class="kicker" style="color:${niv.color};margin-top:4px">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+          <div class="headline" style="font-size:clamp(20px,4vw,26px);margin-bottom:9px">${art.titulo||''}</div>
+          ${art.bajada?`<div class="deck" style="font-size:14px;margin-bottom:10px">${art.bajada}</div>`:''}
+          <hr class="rule-double">
+          <div class="byline" style="margin-bottom:12px">✍ ${art.autor||''}${art.sala?' · '+art.sala:''} ${art.fecha?' · '+art.fecha:''}</div>
+          <div class="body-text drop-cap">${cuerpoParrafos.slice(0,2).join('')}</div>
+          ${hasPQ?`<blockquote class="pq">${art.pullquote}<span class="pq-attr">${art.firma?'— '+art.firma:''}</span></blockquote>`:''}
+        </div>
+        <div class="folio folio-l">${pgL}</div>
+      </div>
+    `;
+  }
+
+  // PÁGINA DERECHA: resto del contenido
+  const restoParrafos = cuerpoParrafos.slice(imgUrl?1:2);
+  let paginaDer = `
+    <div class="pg art-page-r" style="border-left:1px solid var(--paper-rule)">
+      <div class="pg-inner">
+        ${hasPQ && imgUrl ? `<blockquote class="pq" style="margin-bottom:12px">${art.pullquote}<span class="pq-attr">${art.firma?'— '+art.firma:''}</span></blockquote>` : ''}
+        <div class="body-text clearfix">
+          ${restoParrafos.join('')||''}
+        </div>
+        ${buildBloques(art)}
+        ${buildVideo(art)}
+        <hr class="rule-thin" style="margin-top:auto">
+        <div class="byline" style="margin-top:8px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
+          <span>${art.autor||''}${art.sala?' · '+art.sala:''}</span>
+          <span>${art.fecha||''}</span>
         </div>
       </div>
-    </div>`;
+      <div class="folio folio-r">${pgR} · ${niv.label}</div>
+    </div>
+  `;
+
+  return paginaIzq + paginaDer;
 }
 
-function htmlFin() {
+function buildCuerpo(art) {
+  // Soporte de bloques estructurados (nuevo editor) o texto plano (legado)
+  if (Array.isArray(art.bloques) && art.bloques.length) {
+    return art.bloques
+      .filter(b=>b.tipo==='texto'&&b.texto&&b.texto.trim())
+      .map(b => b.texto.split('\n').filter(l=>l.trim()).map(l=>`<p>${esc(l)}</p>`).join(''));
+  }
+  if (!art.cuerpo) return [];
+  return art.cuerpo.split('\n').filter(l=>l.trim()).map(l=>`<p>${esc(l)}</p>`);
+}
+
+function buildBloques(art) {
+  if (!Array.isArray(art.bloques)) return '';
+  return art.bloques.map(b => {
+    if (b.tipo==='imagen' && b.url) {
+      const layout = ['left','right'].includes(b.layout) ? 'float-'+b.layout : '';
+      return `<figure class="art-img-wrap ${layout}">
+        <img src="${driveUrl(b.url)}" alt="${esc(b.caption||'')}" loading="lazy" onerror="this.parentElement.style.display='none'">
+        ${b.caption?`<figcaption class="art-img-caption">${esc(b.caption)}</figcaption>`:''}
+      </figure>`;
+    }
+    return '';
+  }).join('');
+}
+
+function buildVideo(art) {
+  // Soporte video en bloques
+  if (!Array.isArray(art.bloques)) return '';
+  return art.bloques.map(b => {
+    if (b.tipo==='video' && b.url) return embedVideo(b.url, b.caption);
+    return '';
+  }).join('');
+}
+
+// ── CIERRE ───────────────────────────────────────────────────
+function buildFin(i) {
+  const pgL = i * 2 + 1;
   return `
-    <div class="mag-page page-fin">
-      <div class="page-inner">
-        <div class="fin-estrella">✡</div>
+    <div class="pg fin-page">
+      <div class="pg-inner">
+        <div class="fin-star">✡</div>
         <div class="fin-titulo">Fin de esta edición</div>
         <div class="fin-sub">Colegio Rabino Iosef Caro · Belgrano, Buenos Aires</div>
-        <button class="mag-mini-btn" style="margin-top:14px" onclick="irATapa()">↺ Volver a la tapa</button>
+        <button class="fin-btn" onclick="irASpread(0)">↺ Volver a la tapa</button>
       </div>
-    </div>`;
+      <div class="folio folio-l">${pgL}</div>
+    </div>
+    <div class="pg" style="border-left:1px solid var(--paper-rule);background:var(--paper-dk)">
+      <div class="pg-inner" style="align-items:center;justify-content:center;gap:8px;text-align:center;opacity:.25">
+        <div style="font-size:80px;color:var(--gold);font-family:'Playfair Display',serif">✡</div>
+      </div>
+    </div>
+  `;
 }
 
-function renderContenidoCompleto(art) {
-  if (Array.isArray(art.bloques) && art.bloques.length) {
-    return art.bloques.map(b => {
-      if (b.tipo === 'texto' && b.texto && b.texto.trim()) {
-        return `<div class="pg-parrafos">${formatCuerpo(b.texto)}</div>`;
-      }
-      if (b.tipo === 'imagen' && b.url && b.url.trim()) {
-        return renderBloqueImagen(b);
-      }
-      if (b.tipo === 'video' && b.url && b.url.trim()) {
-        return `<div class="bloque-video">${embedVideo(b.url)}${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}</div>`;
-      }
-      return '';
-    }).join('');
+// ══ NAVEGACIÓN ══════════════════════════════════════════════
+window.irASpread = function(idx, animate=true) {
+  if (flipping) return;
+  idx = Math.max(0, Math.min(idx, spreads.length-1));
+
+  if (animate && idx !== spreadIdx) {
+    animarFlip(idx);
+  } else {
+    mostrarSpread(idx);
   }
-  return art.cuerpo
-    ? `<div class="pg-parrafos">${formatCuerpo(art.cuerpo)}</div>`
-    : '<div class="pg-parrafos" style="color:var(--muted);font-style:italic">Sin contenido.</div>';
-}
+};
 
-function renderBloqueImagen(b) {
-  const layout = ['left','right'].includes(b.layout) ? b.layout : 'full';
-  return `
-    <figure class="bloque-imagen layout-${layout}">
-      <img src="${driveUrl(b.url)}" alt="${esc(b.caption || '')}" loading="lazy" onerror="this.parentElement.style.display='none'">
-      ${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}
-    </figure>`;
-}
-
-function embedVideo(url) {
-  url = (url || '').trim();
-  let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
-  if (m) return `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${m[1]}" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
-  m = url.match(/vimeo\.com\/(\d+)/);
-  if (m) return `<div class="video-embed"><iframe src="https://player.vimeo.com/video/${m[1]}" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
-  m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
-  if (m) return `<div class="video-embed"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
-  if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) {
-    return `<div class="video-embed"><video controls src="${url}"></video></div>`;
-  }
-  return `<a href="${url}" target="_blank" rel="noopener" class="video-fallback-link">▶ Ver video</a>`;
-}
-
-function irAPagina(i, animar = true) {
-  if (!paginas.length) return;
-  paginaActual = Math.max(0, Math.min(i, paginas.length - 1));
-  const track = document.getElementById('mag-track');
-  track.style.transition = animar ? '' : 'none';
-  track.style.transform = `translateX(-${paginaActual * 100}%)`;
-  if (!animar) requestAnimationFrame(() => { track.style.transition = ''; });
+function mostrarSpread(idx) {
+  document.querySelectorAll('.page-pair').forEach(el => el.style.display='none');
+  const el = document.getElementById('spread-'+idx);
+  if (el) el.style.display = 'flex';
+  spreadIdx = idx;
   actualizarControles();
 }
-window.irAPagina = irAPagina;
-window.irATapa = () => irAPagina(0);
-window.irAIndice = () => irAPagina(1);
 
-function paginaSiguiente() { irAPagina(paginaActual + 1); }
-function paginaAnterior()  { irAPagina(paginaActual - 1); }
+function animarFlip(nextIdx) {
+  flipping = true;
+  const dir = nextIdx > spreadIdx ? 'next' : 'prev';
+
+  // Identificar página a animar
+  const currentEl = document.getElementById('spread-'+spreadIdx);
+  if (!currentEl) { mostrarSpread(nextIdx); flipping=false; return; }
+
+  // Página que sale: mitad izquierda gira hacia izquierda, o der hacia der
+  const halfToAnimate = dir==='next' ? currentEl.querySelector('.pg:last-child') : currentEl.querySelector('.pg:first-child');
+  if (halfToAnimate) {
+    halfToAnimate.style.position = 'absolute';
+    halfToAnimate.style[dir==='next'?'right':'left'] = '0';
+    halfToAnimate.style.width = '50%';
+    halfToAnimate.style.height = '100%';
+    halfToAnimate.style.zIndex = '50';
+    halfToAnimate.style.animation = `${dir==='next'?'flipR':'flipL'} .48s cubic-bezier(.645,.045,.355,1) forwards`;
+    halfToAnimate.style.transformOrigin = dir==='next' ? 'left center' : 'right center';
+    halfToAnimate.style.transformStyle = 'preserve-3d';
+    halfToAnimate.style.backfaceVisibility = 'hidden';
+  }
+
+  setTimeout(() => {
+    if (halfToAnimate) {
+      halfToAnimate.style.animation = '';
+      halfToAnimate.style.position = '';
+      halfToAnimate.style.zIndex   = '';
+    }
+    mostrarSpread(nextIdx);
+    flipping = false;
+  }, 500);
+}
+
+function paginaSiguiente() { irASpread(spreadIdx+1); }
+function paginaAnterior()  { irASpread(spreadIdx-1); }
+window.paginaSiguiente = paginaSiguiente;
+window.paginaAnterior  = paginaAnterior;
+window.irATapa  = () => irASpread(0);
+window.irAIndice= () => irASpread(0); // el índice está en spread 0 lado der
 
 function actualizarControles() {
-  document.getElementById('btn-prev').disabled = paginaActual === 0;
-  document.getElementById('btn-next').disabled = paginaActual === paginas.length - 1;
-  document.getElementById('page-indicator').textContent = `${paginaActual + 1} / ${paginas.length}`;
-  const pct = paginas.length > 1 ? (paginaActual / (paginas.length - 1)) * 100 : 0;
-  document.getElementById('progress-fill').style.width = pct + '%';
+  const isFirst = spreadIdx === 0;
+  const isLast  = spreadIdx === spreads.length-1;
+  document.getElementById('btn-prev').disabled   = isFirst;
+  document.getElementById('btn-next').disabled   = isLast;
+  document.getElementById('foot-prev').disabled  = isFirst;
+  document.getElementById('foot-next').disabled  = isLast;
+  const pct = spreads.length>1 ? (spreadIdx/(spreads.length-1))*100 : 0;
+  document.getElementById('prog-fill').style.width = pct+'%';
+  document.getElementById('page-num').textContent = `${spreadIdx*2+1} / ${spreads.length*2}`;
+  document.getElementById('ed-select').value = edActual?.id||'';
 }
 
-document.getElementById('btn-prev').addEventListener('click', paginaAnterior);
-document.getElementById('btn-next').addEventListener('click', paginaSiguiente);
+// Teclado
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight') paginaSiguiente();
-  if (e.key === 'ArrowLeft') paginaAnterior();
+  if (e.key==='ArrowRight'||e.key==='ArrowDown') paginaSiguiente();
+  if (e.key==='ArrowLeft'||e.key==='ArrowUp')  paginaAnterior();
 });
 
-let touchX = 0, touchY = 0;
-const viewportEl = document.getElementById('mag-viewport');
-viewportEl.addEventListener('touchstart', e => {
-  touchX = e.touches[0].clientX; touchY = e.touches[0].clientY;
-}, { passive: true });
-viewportEl.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchX;
-  const dy = e.changedTouches[0].clientY - touchY;
-  if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) {
-    if (dx < 0) paginaSiguiente(); else paginaAnterior();
+// Touch/swipe
+let tx0=0,ty0=0;
+document.getElementById('stage').addEventListener('touchstart',e=>{tx0=e.touches[0].clientX;ty0=e.touches[0].clientY;},{passive:true});
+document.getElementById('stage').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx0;
+  const dy=e.changedTouches[0].clientY-ty0;
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){
+    if(dx<0)paginaSiguiente();else paginaAnterior();
   }
-}, { passive: true });
+},{passive:true});
 
-function ajustarViewport() {
-  const vp = document.getElementById('mag-viewport');
-  const stage = document.querySelector('.mag-stage');
-  if (!vp || !stage) return;
-  const arrow = document.getElementById('btn-prev');
-  const arrowW = arrow ? arrow.offsetWidth : 40;
-  const stageStyles = getComputedStyle(stage);
-  const gap = parseFloat(stageStyles.gap) || 10;
-  const padX = parseFloat(stageStyles.paddingLeft) + parseFloat(stageStyles.paddingRight);
-  const padY = parseFloat(stageStyles.paddingTop) + parseFloat(stageStyles.paddingBottom);
+// ══ AJUSTE DE TAMAÑO DEL LIBRO ════════════════════════════════
+function ajustarBook() {
+  esMobile = window.innerWidth < 600;
+  const book = document.getElementById('book');
+  const stage= document.getElementById('stage');
+  if (!book||!stage) return;
 
-  const availW = stage.clientWidth - padX - (arrowW + gap) * 2;
-  const availH = stage.clientHeight - padY;
+  const arrowW = 44+10; // ancho flecha + gap
+  const padX   = esMobile ? 8 : 24;
+  const padY   = esMobile ? 10 : 20;
+  const stageW = stage.clientWidth  - padX*2 - arrowW*2;
+  const stageH = stage.clientHeight - padY*2;
 
-  const RATIO = 3 / 4;
-  let w = Math.min(560, availW);
+  // Ratio doble página: 2:1.4 (horizontal)
+  const RATIO = esMobile ? (3/4) : (2/1.38);
+  let w = stageW;
   let h = w / RATIO;
-  if (h > availH) { h = availH; w = h * RATIO; }
+  if (h > stageH) { h=stageH; w=h*RATIO; }
 
-  vp.style.width  = Math.max(w, 220) + 'px';
-  vp.style.height = Math.max(h, 300) + 'px';
+  book.style.width  = Math.max(w, esMobile?260:420)+'px';
+  book.style.height = Math.max(h, 300)+'px';
+
+  // Modo mobile: una sola página
+  if (esMobile) {
+    book.classList.add('single-mode');
+    book.querySelectorAll('.pg').forEach(pg=>pg.style.width='100%');
+  } else {
+    book.classList.remove('single-mode');
+    book.querySelectorAll('.pg').forEach(pg=>pg.style.width='50%');
+  }
 }
-window.addEventListener('resize', ajustarViewport);
 
+// ══ HELPERS ════════════════════════════════════════════════════
 function driveUrl(url) {
   if (!url) return '';
-  const m = url.match(/\/d\/([^/]+)/);
+  const m = url.match(/\/d\/([^/?#]+)/);
   if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
   return url;
 }
 
-function esc(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
-function mostrarBannerPreview() {
-  document.getElementById('preview-banner-slot').innerHTML =
-    '<div class="preview-banner">👁 Vista previa — esta edición todavía NO está publicada. Las familias no la ven así.</div>';
+function embedVideo(url, caption) {
+  url = (url||'').trim();
+  let src='';
+  let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  if (m) src=`https://www.youtube.com/embed/${m[1]}`;
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) src=`https://player.vimeo.com/video/${m[1]}`;
+  m = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+  if (m) src=`https://drive.google.com/file/d/${m[1]}/preview`;
+  if (src) {
+    return `<div class="video-wrap" style="margin:12px 0"><iframe src="${src}" allowfullscreen loading="lazy"></iframe></div>
+      ${caption?`<div class="art-img-caption" style="margin-top:-6px">${esc(caption)}</div>`:''}`;
+  }
+  if (/\.(mp4|webm|ogg)/i.test(url)) {
+    return `<div class="video-wrap" style="margin:12px 0"><video controls src="${url}"></video></div>`;
+  }
+  return `<a href="${url}" target="_blank" rel="noopener" style="display:inline-block;padding:8px 14px;background:var(--gold);color:#fff;font-family:'Lato',sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-decoration:none;margin:10px 0">▶ Ver video</a>`;
 }
 
-function formatCuerpo(texto) {
-  if (!texto) return '';
-  return texto.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join('');
-}
-
-function formatFecha(ts) {
+function fechaLarga(ts) {
   if (!ts) return '—';
-  try {
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
-  } catch { return String(ts); }
+  try { const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}); } catch { return '—'; }
 }
-
-function formatFechaCorta(ts) {
+function fechaCorta(ts) {
   if (!ts) return '—';
-  try {
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-  } catch { return String(ts); }
-}
-
-function ocultarLoading() {
-  const l = document.getElementById('loading');
-  l.style.opacity = '0';
-  setTimeout(() => l.remove(), 400);
+  try { const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'}); } catch { return '—'; }
 }
 
 init();
