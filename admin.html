@@ -91,6 +91,29 @@ html,body{height:100%;font-family:'Lato',sans-serif;background:var(--bg);color:v
 .ai-sm{padding:6px 9px;font-size:12px}
 textarea.ai{resize:vertical;line-height:1.6}
 
+/* BLOQUES DE CONTENIDO */
+.bloques-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.bloques-empty{
+  padding:20px 16px;text-align:center;color:var(--muted);font-size:12.5px;
+  border:1px dashed var(--rule);border-radius:8px;line-height:1.6;
+}
+.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:12px}
+.bloque-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bloque-tag{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale)}
+.bloque-ctrls{display:flex;gap:5px}
+.bloque-ctrls button{
+  width:24px;height:24px;border-radius:5px;border:1px solid var(--rule);background:var(--navy);
+  color:var(--ink);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;padding:0;
+}
+.bloque-ctrls button:hover:not(:disabled){border-color:var(--gold)88;color:var(--gold)}
+.bloque-ctrls button:disabled{opacity:.3;cursor:not-allowed}
+.bloque-ctrls button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+.bloque-item .ai{margin-bottom:0}
+.bloque-item .ai + .ai,.bloque-item select.ai{margin-top:6px}
+.bloque-add-row{display:flex;gap:8px;flex-wrap:wrap}
+.bloque-add-row .btn{font-size:10px;padding:8px 14px}
+
 /* BOTONES */
 .btn{
   display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
@@ -626,6 +649,105 @@ window.renderArticulosFiltrado = async function(edIdDefault) {
   list.innerHTML = `<div style="margin-bottom:10px;font-size:11px;color:var(--muted)">${arts.length} artículo${arts.length!==1?'s':''}</div>` + html;
 };
 
+// ═══ EDITOR DE BLOQUES (texto / foto / video) ═══════════════════
+let bloques = [];
+
+function nuevoBloqueId() { return 'b_' + Math.random().toString(36).slice(2,9); }
+
+function bloquesDesdeArticulo(art) {
+  // Si el artículo ya tiene bloques, usarlos tal cual
+  if (art && Array.isArray(art.bloques) && art.bloques.length) {
+    return art.bloques.map(b => ({...b, id: b.id || nuevoBloqueId()}));
+  }
+  // Migración: artículos viejos con cuerpo + imagenUrl sueltos
+  const migrados = [];
+  if (art?.cuerpo && art.cuerpo.trim()) {
+    migrados.push({ id: nuevoBloqueId(), tipo:'texto', texto: art.cuerpo });
+  }
+  if (art?.imagenUrl && art.imagenUrl.trim()) {
+    migrados.push({ id: nuevoBloqueId(), tipo:'imagen', url: art.imagenUrl, caption:'', layout:'full' });
+  }
+  if (!migrados.length) migrados.push({ id: nuevoBloqueId(), tipo:'texto', texto:'' });
+  return migrados;
+}
+
+window.agregarBloque = function(tipo) {
+  const b = { id: nuevoBloqueId(), tipo };
+  if (tipo === 'texto')  b.texto = '';
+  if (tipo === 'imagen') { b.url = ''; b.caption = ''; b.layout = 'full'; }
+  if (tipo === 'video')  { b.url = ''; b.caption = ''; }
+  bloques.push(b);
+  renderBloquesEditor();
+};
+
+window.eliminarBloque = function(id) {
+  bloques = bloques.filter(b => b.id !== id);
+  if (!bloques.length) bloques = [{ id: nuevoBloqueId(), tipo:'texto', texto:'' }];
+  renderBloquesEditor();
+};
+
+window.moverBloque = function(id, dir) {
+  const i = bloques.findIndex(b => b.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= bloques.length) return;
+  [bloques[i], bloques[j]] = [bloques[j], bloques[i]];
+  renderBloquesEditor();
+};
+
+window.actualizarBloque = function(id, campo, valor) {
+  const b = bloques.find(b => b.id === id);
+  if (b) b[campo] = valor;
+};
+
+function htmlBloque(b, i, total) {
+  const ctrls = `
+    <div class="bloque-ctrls">
+      <button type="button" onclick="moverBloque('${b.id}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
+      <button type="button" onclick="moverBloque('${b.id}',1)" ${i===total-1?'disabled':''} title="Bajar">↓</button>
+      <button type="button" class="del" onclick="eliminarBloque('${b.id}')" title="Eliminar">✕</button>
+    </div>`;
+
+  if (b.tipo === 'texto') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">📝 Texto</span>${ctrls}</div>
+        <textarea class="ai" rows="4" placeholder="Escribí un párrafo…" oninput="actualizarBloque('${b.id}','texto',this.value)">${esc(b.texto)}</textarea>
+      </div>`;
+  }
+  if (b.tipo === 'imagen') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">🖼️ Foto</span>${ctrls}</div>
+        <input class="ai" placeholder="Link de Google Drive u otra imagen" value="${esc(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
+        <input class="ai" placeholder="Pie de foto (opcional)" value="${esc(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
+        <select class="ai" onchange="actualizarBloque('${b.id}','layout',this.value)">
+          <option value="full" ${(b.layout||'full')==='full'?'selected':''}>Ancho completo</option>
+          <option value="left" ${b.layout==='left'?'selected':''}>A la izquierda (texto al costado)</option>
+          <option value="right" ${b.layout==='right'?'selected':''}>A la derecha (texto al costado)</option>
+        </select>
+      </div>`;
+  }
+  if (b.tipo === 'video') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">🎬 Video</span>${ctrls}</div>
+        <input class="ai" placeholder="Link de YouTube, Vimeo, Drive o archivo .mp4" value="${esc(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
+        <input class="ai" placeholder="Descripción del video (opcional)" value="${esc(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
+      </div>`;
+  }
+  return '';
+}
+
+function renderBloquesEditor() {
+  const cont = document.getElementById('bloques-editor');
+  if (!cont) return;
+  if (!bloques.length) {
+    cont.innerHTML = '<div class="bloques-empty">Todavía no hay contenido.<br>Usá los botones de abajo para sumar texto, fotos o videos.</div>';
+    return;
+  }
+  cont.innerHTML = bloques.map((b,i) => htmlBloque(b, i, bloques.length)).join('');
+}
+
 // ═══ MODAL ARTÍCULO (editar / revisar) ═══════════════════════
 window.abrirModalArticulo = async function(artId) {
   mostrarModalEditarArticulo(artId ? {id:artId} : null, false, artId);
@@ -640,6 +762,8 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
     const sn = await getDoc(doc(db,'articulos',artId));
     if (sn.exists()) art = {id:sn.id,...sn.data()};
   }
+
+  bloques = bloquesDesdeArticulo(art);
 
   // Cargar ediciones para el selector
   const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
@@ -684,7 +808,13 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
       </div>
       <div class="field">
         <label class="lbl">Contenido completo</label>
-        <textarea class="ai" id="art-cuerpo" rows="6" placeholder="Texto del artículo. Cada línea en blanco separa párrafos.">${esc(art?.cuerpo||'')}</textarea>
+        <span style="font-size:11px;color:var(--muted);margin-top:-2px">Combiná párrafos, fotos y videos, y reordenalos con ↑ ↓.</span>
+        <div class="bloques-list" id="bloques-editor"></div>
+        <div class="bloque-add-row">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('texto')">＋ Texto</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('imagen')">＋ Foto</button>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('video')">＋ Video</button>
+        </div>
       </div>
       <div class="grid2">
         <div class="field">
@@ -696,15 +826,9 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
           <input class="ai" id="art-sala" value="${esc(art?.sala||'')}" placeholder="Ej: 3.° Grado A">
         </div>
       </div>
-      <div class="grid2">
-        <div class="field">
-          <label class="lbl">Fecha</label>
-          <input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026">
-        </div>
-        <div class="field">
-          <label class="lbl">URL imagen (Google Drive u otro)</label>
-          <input class="ai" id="art-imagen" value="${esc(art?.imagenUrl||'')}" placeholder="https://drive.google.com/file/d/…">
-        </div>
+      <div class="field">
+        <label class="lbl">Fecha</label>
+        <input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026">
       </div>
       <div class="field">
         <label class="lbl">Edición a la que pertenece</label>
@@ -730,20 +854,29 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
     </div>
   `;
 
+  renderBloquesEditor();
   abrirModal('modal-art');
 }
 
 window.guardarArticulo = async function(artId, estado) {
+  const bloquesValidos = bloques.filter(b =>
+    (b.tipo === 'texto'  && b.texto && b.texto.trim()) ||
+    (b.tipo !== 'texto'  && b.url   && b.url.trim())
+  );
+  const cuerpo = bloquesValidos.filter(b => b.tipo==='texto').map(b => b.texto.trim()).join('\n\n');
+  const primeraImagen = bloquesValidos.find(b => b.tipo === 'imagen');
+
   const data = {
     nivel:      document.getElementById('art-nivel').value,
     tipo:       document.getElementById('art-tipo').value,
     titulo:     document.getElementById('art-titulo').value.trim(),
     bajada:     document.getElementById('art-bajada').value.trim(),
-    cuerpo:     document.getElementById('art-cuerpo').value.trim(),
+    cuerpo,
+    bloques:    bloquesValidos,
     autor:      document.getElementById('art-autor').value.trim(),
     sala:       document.getElementById('art-sala').value.trim(),
     fecha:      document.getElementById('art-fecha').value.trim(),
-    imagenUrl:  document.getElementById('art-imagen').value.trim(),
+    imagenUrl:  primeraImagen ? primeraImagen.url.trim() : '',
     edicionId:  document.getElementById('art-edicion').value,
     orden:      parseInt(document.getElementById('art-orden').value) || 99,
     estado,
