@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin – Revista Iosef Caro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+
+:root {
+  --bg: #0E1628; --navy: #1A2848; --card: #1E3060;
+  --gold: #C9A84C; --gold-pale: #E8D5A0;
+  --white: #fff; --ink: #F0EDE6; --muted: #8888AA;
+  --rule: #2A3A6A; --dim: #1E2D52;
+  --ok: #3AB07A; --err: #C84C4C; --warn: #C89A4C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Lato',sans-serif;background:var(--bg);color:var(--ink)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--rule);border-radius:4px}
+
+/* LOGIN */
+#login-screen{
+  position:fixed;inset:0;background:radial-gradient(ellipse at 50% 30%,var(--navy),var(--bg));
+  display:flex;align-items:center;justify-content:center;z-index:9999;
+}
+.login-box{
+  background:var(--navy);border:1px solid var(--rule);border-radius:16px;
+  padding:36px;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.5);
+}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo .star{font-size:36px;color:var(--gold)}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-top:8px}
+.login-logo p{font-size:11px;color:var(--muted);letter-spacing:1px;margin-top:4px;text-transform:uppercase}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--bg);
+  border-right:1px solid var(--rule);display:flex;flex-direction:column;
+}
+.sidebar-logo{padding:16px;border-bottom:1px solid var(--rule)}
+.sidebar-logo .mark{font-family:'Playfair Display',serif;font-size:15px;font-weight:900;color:var(--white)}
+.sidebar-logo .sub{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:10px 0}
+.nav-section{padding:10px 16px 3px;font-size:7.5px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:var(--rule)}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:10px 16px;border:none;cursor:pointer;background:none;
+  color:var(--muted);font-size:13px;font-weight:600;text-align:left;
+  transition:all .13s;border-left:3px solid transparent;font-family:inherit;
+}
+.nav-btn.on{background:var(--card);color:var(--gold);border-left-color:var(--gold)}
+.nav-btn:hover:not(.on){background:var(--navy);color:var(--white)}
+.sidebar-foot{padding:8px 0;border-top:1px solid var(--rule)}
+.sidebar-user{padding:8px 16px;font-size:10px;color:var(--muted)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{
+  height:52px;flex-shrink:0;background:var(--bg);
+  border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:100;
+}
+.topbar-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--white)}
+.topbar-sub{font-size:9px;color:var(--muted);letter-spacing:.8px;margin-top:1px}
+.page{padding:24px;flex:1}
+
+/* CARDS */
+.card{background:var(--navy);border:1px solid var(--rule);border-radius:10px}
+.cp{padding:18px 20px}
+.stat-card{border-left:3px solid;border-radius:8px;padding:14px 17px;background:var(--navy)}
+
+/* TABLA */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{padding:9px 12px;text-align:left;font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--bg);border-bottom:1px solid var(--rule);white-space:nowrap}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--dim);font-size:13px;color:var(--ink);vertical-align:middle}
+.tbl tr:hover td{background:var(--card)55}
+
+/* INPUTS */
+.field{display:flex;flex-direction:column;gap:5px}
+.lbl{font-size:8.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.ai{
+  width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--rule);
+  border-radius:6px;color:var(--ink);font-size:14px;outline:none;
+  transition:border-color .15s;font-family:inherit;
+}
+.ai:focus{border-color:var(--gold)88}
+.ai-sm{padding:6px 9px;font-size:12px}
+textarea.ai{resize:vertical;line-height:1.6}
+
+/* BOTONES */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  border-radius:4px;font-weight:900;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;padding:9px 20px;transition:all .15s;font-family:inherit;
+}
+.btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold-pale)}
+.btn-ghost{background:none;border:1px solid var(--rule);color:var(--muted)}.btn-ghost:hover{border-color:var(--gold)55;color:var(--gold)}
+.btn-danger{background:var(--err)22;color:var(--err);border:1px solid var(--err)44}
+.btn-ok{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
+.btn-sm{padding:5px 11px;font-size:10px}
+.btn-full{width:100%;justify-content:center}
+
+/* BADGES */
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.bdg-pub{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
+.bdg-rev{background:var(--warn)22;color:var(--warn);border:1px solid var(--warn)44}
+.bdg-bor{background:var(--rule)33;color:var(--muted);border:1px solid var(--rule)}
+
+/* TOGGLE */
+.tgl{width:40px;height:22px;border-radius:11px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.tgl-k{width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* MODAL */
+.ov{position:fixed;inset:0;z-index:9000;background:rgba(8,12,32,.9);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .2s}
+.ov.open{opacity:1;pointer-events:all}
+.mbox{background:var(--navy);border:1px solid var(--rule);border-radius:12px;width:100%;max-width:680px;max-height:92vh;overflow-y:auto;transform:translateY(14px);transition:transform .22s}
+.ov.open .mbox{transform:translateY(0)}
+.mhead{padding:16px 20px 14px;border-bottom:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between}
+.mclose{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:2px 5px}
+.mclose:hover{color:var(--white)}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;
+  white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.4);
+  animation:tIn .2s ease;pointer-events:none;
+}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* NOTIF BADGE */
+.notif{
+  background:var(--err);color:#fff;border-radius:50%;
+  width:18px;height:18px;font-size:10px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  margin-left:auto;flex-shrink:0;
+}
+
+/* EDICIÓN CARD */
+.edicion-card{background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .15s}
+.edicion-card:hover{border-color:var(--gold)55}
+.edicion-card.selected{border-color:var(--gold);background:var(--gold)11}
+.edicion-num{font-family:'Playfair Display',serif;font-size:28px;font-weight:900;color:var(--gold);width:40px;flex-shrink:0;text-align:center}
+.edicion-info{flex:1}
+.edicion-titulo{font-size:14px;font-weight:700;color:var(--white)}
+.edicion-meta{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* VISTA PREVIA ARTÍCULO */
+.art-preview{
+  background:var(--bg);border:1px solid var(--rule);border-radius:8px;
+  padding:12px 14px;margin-bottom:8px;
+}
+.art-preview-titulo{font-size:14px;font-weight:700;color:var(--white);margin-bottom:3px}
+.art-preview-meta{font-size:11px;color:var(--muted)}
+.art-preview-estado{display:flex;align-items:center;justify-content:space-between}
+
+.loading-spin{width:32px;height:32px;border:2px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="star">✡</div>
+      <h1>Panel Admin</h1>
+      <p>Revista Institucional · Iosef Caro</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px">
+      <div class="field">
+        <label class="lbl">Email</label>
+        <input class="ai" type="email" id="login-email" placeholder="admin@iosefcaro.edu.ar" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="field">
+        <label class="lbl">Contraseña</label>
+        <input class="ai" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="login-err" style="font-size:12px;color:var(--err);display:none;padding:8px 12px;background:var(--err)22;border-radius:6px"></div>
+      <button class="btn btn-gold btn-full" onclick="doLogin()" id="login-btn">Ingresar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:6px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--bg);font-weight:900">✡</div>
+        <div>
+          <div class="mark">Iosef Caro</div>
+          <div class="sub">Admin · Revista</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">GENERAL</div>
+      <button class="nav-btn on" onclick="setTab('revision')" id="tab-revision">
+        <span>📋</span><span>Revisión</span>
+        <span class="notif" id="notif-revision" style="display:none">0</span>
+      </button>
+      <div class="nav-section">EDICIONES</div>
+      <button class="nav-btn" onclick="setTab('ediciones')" id="tab-ediciones"><span>📰</span><span>Ediciones</span></button>
+      <button class="nav-btn" onclick="setTab('articulos')" id="tab-articulos"><span>✏️</span><span>Artículos</span></button>
+      <div class="nav-section">SISTEMA</div>
+      <button class="nav-btn" onclick="setTab('docentes')" id="tab-docentes"><span>👥</span><span>Docentes</span></button>
+    </div>
+    <div class="sidebar-foot">
+      <div class="sidebar-user" id="user-email">—</div>
+      <button class="nav-btn" onclick="doLogout()" style="color:var(--err)"><span>🚪</span><span>Salir</span></button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Revisión</div>
+        <div class="topbar-sub" id="topbar-sub">Artículos enviados por docentes</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center" id="topbar-actions"></div>
+    </div>
+    <div class="page" id="page-content">
+      <div class="loading-spin"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR/VER ARTÍCULO -->
+<div class="ov" id="modal-art">
+  <div class="mbox" style="max-width:720px">
+    <div class="mhead">
+      <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)" id="modal-art-titulo">Artículo</span>
+      <button class="mclose" onclick="cerrarModal('modal-art')">×</button>
+    </div>
+    <div style="padding:20px" id="modal-art-body"></div>
+  </div>
+</div>
+
+<!-- MODAL NUEVA EDICIÓN -->
+<div class="ov" id="modal-edicion">
+  <div class="mbox">
+    <div class="mhead">
+      <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)" id="modal-edicion-titulo">Nueva edición</span>
+      <button class="mclose" onclick="cerrarModal('modal-edicion')">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px" id="modal-edicion-body">
+      <div class="grid2">
+        <div class="field"><label class="lbl">Número de edición</label><input class="ai" type="number" id="ed-numero" placeholder="1"></div>
+        <div class="field"><label class="lbl">Semana del (fecha inicio)</label><input class="ai" type="date" id="ed-fecha"></div>
+      </div>
+      <div class="field"><label class="lbl">Título de la edición</label><input class="ai" id="ed-titulo" placeholder="Ej: Semana del 7 de julio"></div>
+      <div class="field"><label class="lbl">Subtítulo o tema</label><input class="ai" id="ed-subtitulo" placeholder="Ej: Cierre del primer trimestre"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-edicion')">Cancelar</button>
+        <button class="btn btn-gold" onclick="guardarEdicion()">Crear edición</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" style="display:none"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDocs, getDoc, addDoc, setDoc,
+  updateDoc, deleteDoc, query, orderBy, where, serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
+  authDomain: "revista-1ac1c.firebaseapp.com",
+  projectId: "revista-1ac1c",
+  storageBucket: "revista-1ac1c.firebasestorage.app",
+  messagingSenderId: "137545616566",
+  appId: "1:137545616566:web:f74736d93682e2727dea17"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const auth = getAuth(app);
+
+const NIVELES = {
+  institucional: { label:'Institucional',    color:'#C9A84C', icon:'■' },
+  inicial:       { label:'Nivel Inicial',    color:'#C07030', icon:'✦' },
+  primaria:      { label:'Nivel Primario',   color:'#2A7A50', icon:'◆' },
+  secundaria:    { label:'Nivel Secundario', color:'#2A50A0', icon:'▲' },
+  reshit:        { label:'Reshit',           color:'#7030A0', icon:'✡' },
+};
+
+let currentTab = 'revision';
+let edicionEditandoId = null;
+
+// ═══ AUTH ═══════════════════════════════════════════════════
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('user-email').textContent = '👤 ' + user.email;
+    setTab('revision');
+    cargarNotifCount();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+window.doLogin = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  if (!email || !pass) { mostrarErr(errEl, 'Completá email y contraseña'); return; }
+  btn.textContent = 'Ingresando…'; btn.disabled = true;
+  errEl.style.display = 'none';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch (e) {
+    const msgs = {
+      'auth/invalid-credential':'Email o contraseña incorrectos.',
+      'auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.',
+    };
+    mostrarErr(errEl, msgs[e.code] || 'Error: ' + e.message);
+    btn.textContent = 'Ingresar →'; btn.disabled = false;
+  }
+};
+
+window.doLogout = async function() {
+  await signOut(auth);
+};
+
+// ═══ TABS ════════════════════════════════════════════════════
+window.setTab = function(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + tab)?.classList.add('on');
+  const titles = {
+    revision:  ['📋 Revisión', 'Artículos enviados por docentes — revisá, editá y publicá'],
+    ediciones: ['📰 Ediciones', 'Gestión de ediciones semanales'],
+    articulos: ['✏️ Artículos', 'Todos los artículos del sistema'],
+    docentes:  ['👥 Docentes', 'Usuarios con acceso de docente'],
+  };
+  const [t, s] = titles[tab] || ['—', ''];
+  document.getElementById('topbar-title').textContent = t;
+  document.getElementById('topbar-sub').textContent = s;
+  const actionsEl = document.getElementById('topbar-actions');
+  actionsEl.innerHTML = '';
+  if (tab === 'ediciones') {
+    actionsEl.innerHTML = '<button class="btn btn-gold btn-sm" onclick="abrirModalEdicion()">+ Nueva edición</button>';
+  }
+  if (tab === 'articulos') {
+    actionsEl.innerHTML = '<button class="btn btn-gold btn-sm" onclick="abrirModalArticulo()">+ Nuevo artículo</button>';
+  }
+  const renders = { revision:renderRevision, ediciones:renderEdiciones, articulos:renderArticulos, docentes:renderDocentes };
+  renders[tab]?.();
+};
+
+// ═══ NOTIFICACIONES ══════════════════════════════════════════
+async function cargarNotifCount() {
+  try {
+    const sn = await getDocs(query(collection(db,'articulos'), where('estado','==','revision')));
+    const n = sn.size;
+    const el = document.getElementById('notif-revision');
+    if (n > 0) { el.textContent = n; el.style.display = 'flex'; }
+    else el.style.display = 'none';
+  } catch {}
+}
+
+// ═══ REVISIÓN ════════════════════════════════════════════════
+async function renderRevision() {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = '<div class="loading-spin"></div>';
+  try {
+    const sn = await getDocs(query(collection(db,'articulos'), where('estado','==','revision'), orderBy('creadoEn','asc')));
+    const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+
+    if (!arts.length) {
+      pg.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">✅</div><div style="font-family:\'Playfair Display\',serif;font-size:18px;font-style:italic;color:var(--muted)">Sin artículos pendientes de revisión</div></div>';
+      return;
+    }
+
+    let html = `<div style="margin-bottom:16px;font-size:12px;color:var(--muted)">${arts.length} artículo${arts.length!==1?'s':''} esperando revisión</div>`;
+
+    arts.forEach(art => {
+      const niv = NIVELES[art.nivel] || {label:art.nivel,color:'#888',icon:'·'};
+      const desde = art.creadoEn ? tiempoDesde(art.creadoEn) : '';
+      html += `
+        <div style="background:var(--navy);border:1px solid var(--warn)44;border-left:4px solid var(--warn);border-radius:8px;padding:16px 18px;margin-bottom:10px">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div style="flex:1">
+              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+                <span style="font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:${niv.color}">${niv.icon} ${niv.label}</span>
+                <span style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)">${art.tipo||''}</span>
+                <span class="bdg bdg-rev">Pendiente revisión</span>
+              </div>
+              <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white);margin-bottom:4px">${art.titulo||'Sin título'}</div>
+              ${art.bajada ? `<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:6px">${art.bajada}</div>` : ''}
+              <div style="font-size:10px;color:var(--muted)">
+                Enviado por <strong style="color:var(--ink)">${art.docenteNombre||art.docenteEmail||'—'}</strong>
+                ${desde ? '· ' + desde : ''}
+                ${art.sala ? ' · ' + art.sala : ''}
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              <button class="btn btn-ghost btn-sm" onclick="abrirRevision('${art.id}')">Ver y editar</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    pg.innerHTML = html;
+  } catch(e) {
+    pg.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+  }
+}
+
+window.abrirRevision = async function(artId) {
+  const ref = doc(db,'articulos',artId);
+  const sn = await getDoc(ref);
+  if (!sn.exists()) return;
+  const art = {id:sn.id,...sn.data()};
+  mostrarModalEditarArticulo(art, true);
+};
+
+// ═══ EDICIONES ═══════════════════════════════════════════════
+async function renderEdiciones() {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = '<div class="loading-spin"></div>';
+  try {
+    const sn = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+    const eds = sn.docs.map(d => ({id:d.id,...d.data()}));
+
+    if (!eds.length) {
+      pg.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No hay ediciones. Creá la primera.</div>';
+      return;
+    }
+
+    let html = '';
+    eds.forEach(ed => {
+      const estado = ed.estado || 'borrador';
+      const bdgClass = estado === 'publicada' ? 'bdg-pub' : estado === 'revision' ? 'bdg-rev' : 'bdg-bor';
+      const fechaStr = formatFecha(ed.fechaInicio);
+      html += `
+        <div class="edicion-card" onclick="verEdicion('${ed.id}')">
+          <div class="edicion-num">${ed.numero||'?'}</div>
+          <div class="edicion-info">
+            <div class="edicion-titulo">${ed.titulo || 'Edición sin título'}</div>
+            <div class="edicion-meta">Semana del ${fechaStr} · <span class="bdg ${bdgClass}" style="font-size:9px">${estado}</span></div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editarEdicion('${ed.id}')">Editar</button>
+            ${estado !== 'publicada'
+              ? `<button class="btn btn-gold btn-sm" onclick="event.stopPropagation();publicarEdicion('${ed.id}')">Publicar</button>`
+              : `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();despublicarEdicion('${ed.id}')">Despublicar</button>`
+            }
+          </div>
+        </div>
+      `;
+    });
+    pg.innerHTML = html;
+  } catch(e) {
+    pg.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+  }
+}
+
+window.abrirModalEdicion = function(edId) {
+  edicionEditandoId = edId || null;
+  document.getElementById('modal-edicion-titulo').textContent = edId ? 'Editar edición' : 'Nueva edición';
+  // Limpiar
+  ['ed-numero','ed-titulo','ed-subtitulo','ed-fecha'].forEach(id => document.getElementById(id).value = '');
+  if (!edId) {
+    document.getElementById('ed-fecha').value = new Date().toISOString().slice(0,10);
+  }
+  abrirModal('modal-edicion');
+};
+
+window.editarEdicion = async function(edId) {
+  const sn = await getDoc(doc(db,'ediciones',edId));
+  if (!sn.exists()) return;
+  const ed = sn.data();
+  edicionEditandoId = edId;
+  document.getElementById('modal-edicion-titulo').textContent = 'Editar edición';
+  document.getElementById('ed-numero').value = ed.numero || '';
+  document.getElementById('ed-titulo').value = ed.titulo || '';
+  document.getElementById('ed-subtitulo').value = ed.subtitulo || '';
+  if (ed.fechaInicio) {
+    try { document.getElementById('ed-fecha').value = ed.fechaInicio.toDate().toISOString().slice(0,10); } catch {}
+  }
+  abrirModal('modal-edicion');
+};
+
+window.guardarEdicion = async function() {
+  const numero   = parseInt(document.getElementById('ed-numero').value);
+  const titulo   = document.getElementById('ed-titulo').value.trim();
+  const subtitulo= document.getElementById('ed-subtitulo').value.trim();
+  const fecha    = document.getElementById('ed-fecha').value;
+  if (!titulo || !fecha) { toast('Completá título y fecha', 'err'); return; }
+  try {
+    const data = {
+      numero: numero || null, titulo, subtitulo,
+      fechaInicio: Timestamp.fromDate(new Date(fecha + 'T00:00:00')),
+      estado: edicionEditandoId ? undefined : 'borrador',
+      actualizadoEn: serverTimestamp(),
+    };
+    if (!edicionEditandoId) data.creadoEn = serverTimestamp();
+    if (edicionEditandoId) {
+      delete data.estado;
+      await updateDoc(doc(db,'ediciones',edicionEditandoId), data);
+      toast('Edición actualizada ✓');
+    } else {
+      data.estado = 'borrador';
+      await addDoc(collection(db,'ediciones'), data);
+      toast('Edición creada ✓');
+    }
+    cerrarModal('modal-edicion');
+    renderEdiciones();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+};
+
+window.publicarEdicion = async function(edId) {
+  if (!confirm('¿Publicar esta edición? Será visible para las familias.')) return;
+  await updateDoc(doc(db,'ediciones',edId), { estado:'publicada', publicadoEn:serverTimestamp() });
+  toast('Edición publicada ✓');
+  renderEdiciones();
+};
+
+window.despublicarEdicion = async function(edId) {
+  if (!confirm('¿Despublicar esta edición? Dejará de ser visible.')) return;
+  await updateDoc(doc(db,'ediciones',edId), { estado:'borrador' });
+  toast('Edición despublicada');
+  renderEdiciones();
+};
+
+window.verEdicion = function(edId) {
+  setTab('articulos');
+  setTimeout(() => renderArticulos(edId), 100);
+};
+
+// ═══ ARTÍCULOS ═══════════════════════════════════════════════
+async function renderArticulos(filtroEdicionId) {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = '<div class="loading-spin"></div>';
+  try {
+    // Primero cargar ediciones para el selector
+    const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+    const ediciones = snEds.docs.map(d => ({id:d.id,...d.data()}));
+
+    // Selector de edición
+    let selectorHtml = `
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+        <select class="ai" id="filtro-edicion" onchange="renderArticulosFiltrado()" style="width:auto;min-width:220px">
+          <option value="">Todas las ediciones</option>
+          ${ediciones.map(e => `<option value="${e.id}" ${e.id===filtroEdicionId?'selected':''}>${e.numero ? 'Ed. '+e.numero+' – ':''} ${e.titulo||'Sin título'}</option>`).join('')}
+        </select>
+        <select class="ai" id="filtro-estado" onchange="renderArticulosFiltrado()" style="width:auto;min-width:150px">
+          <option value="">Todo estado</option>
+          <option value="publicado">✅ Publicado</option>
+          <option value="revision">⏳ En revisión</option>
+          <option value="borrador">📝 Borrador</option>
+          <option value="rechazado">❌ Rechazado</option>
+        </select>
+      </div>
+      <div id="arts-list"></div>
+    `;
+    pg.innerHTML = selectorHtml;
+    renderArticulosFiltrado(filtroEdicionId);
+  } catch(e) {
+    pg.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+  }
+}
+
+window.renderArticulosFiltrado = async function(edIdDefault) {
+  const edId = edIdDefault || document.getElementById('filtro-edicion')?.value || '';
+  const estado = document.getElementById('filtro-estado')?.value || '';
+  const list = document.getElementById('arts-list');
+  if (!list) return;
+  list.innerHTML = '<div class="loading-spin"></div>';
+
+  let q = query(collection(db,'articulos'), orderBy('creadoEn','desc'));
+  if (edId)   q = query(collection(db,'articulos'), where('edicionId','==',edId), orderBy('orden','asc'));
+  if (estado && !edId) q = query(collection(db,'articulos'), where('estado','==',estado), orderBy('creadoEn','desc'));
+  if (estado && edId)  q = query(collection(db,'articulos'), where('edicionId','==',edId), where('estado','==',estado), orderBy('orden','asc'));
+
+  const sn = await getDocs(q);
+  const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+
+  if (!arts.length) { list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Sin artículos</div>'; return; }
+
+  const html = arts.map(art => {
+    const niv = NIVELES[art.nivel] || {label:art.nivel||'—',color:'#888',icon:'·'};
+    const bdg = {publicado:'bdg-pub',revision:'bdg-rev',borrador:'bdg-bor',rechazado:'bdg-bor'}[art.estado] || 'bdg-bor';
+    return `
+      <div style="background:var(--navy);border:1px solid var(--rule);border-radius:8px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px;flex-wrap:wrap">
+            <span style="font-size:9px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:${niv.color}">${niv.icon} ${niv.label}</span>
+            <span class="bdg ${bdg}">${art.estado||'borrador'}</span>
+            ${art.orden ? `<span style="font-size:9px;color:var(--muted)">#${art.orden}</span>` : ''}
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${art.titulo||'Sin título'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${art.autor||''} ${art.sala?'· '+art.sala:''} ${art.fecha?'· '+art.fecha:''}</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-shrink:0">
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalArticulo('${art.id}')">Editar</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarArticulo('${art.id}')">×</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  list.innerHTML = `<div style="margin-bottom:10px;font-size:11px;color:var(--muted)">${arts.length} artículo${arts.length!==1?'s':''}</div>` + html;
+};
+
+// ═══ MODAL ARTÍCULO (editar / revisar) ═══════════════════════
+window.abrirModalArticulo = async function(artId) {
+  mostrarModalEditarArticulo(artId ? {id:artId} : null, false, artId);
+};
+
+async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
+  const modal = document.getElementById('modal-art');
+  const body  = document.getElementById('modal-art-body');
+
+  let art = artData;
+  if (artId && (!artData || !artData.titulo)) {
+    const sn = await getDoc(doc(db,'articulos',artId));
+    if (sn.exists()) art = {id:sn.id,...sn.data()};
+  }
+
+  // Cargar ediciones para el selector
+  const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+  const ediciones = snEds.docs.map(d => ({id:d.id,...d.data()}));
+  const edOpcs = ediciones.map(e => `<option value="${e.id}" ${art?.edicionId===e.id?'selected':''}>${e.numero?'Ed.'+e.numero+' – ':''}${e.titulo||'Sin título'}</option>`).join('');
+
+  document.getElementById('modal-art-titulo').textContent = modoRevision ? '📋 Revisión de artículo' : (art ? 'Editar artículo' : 'Nuevo artículo');
+
+  body.innerHTML = `
+    ${modoRevision ? `
+      <div style="background:var(--warn)18;border:1px solid var(--warn)44;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--warn)">
+        ⏳ Enviado por <strong>${art?.docenteNombre||art?.docenteEmail||'—'}</strong> ${art?.creadoEn ? '· ' + tiempoDesde(art.creadoEn) : ''}
+        <br>Revisá, editá si es necesario y luego publicá o asignalo a una edición.
+      </div>
+    ` : ''}
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="grid3">
+        <div class="field">
+          <label class="lbl">Nivel</label>
+          <select class="ai" id="art-nivel">
+            ${Object.entries(NIVELES).map(([k,v]) => `<option value="${k}" ${art?.nivel===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Tipo</label>
+          <select class="ai" id="art-tipo">
+            ${['noticia','galeria','proyecto','evento','comunicado','aviso'].map(t => `<option value="${t}" ${art?.tipo===t?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">Orden en edición</label>
+          <input class="ai" type="number" id="art-orden" value="${art?.orden||''}" placeholder="1, 2, 3…">
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Título</label>
+        <input class="ai" id="art-titulo" value="${esc(art?.titulo||'')}" placeholder="Título del artículo…">
+      </div>
+      <div class="field">
+        <label class="lbl">Bajada / Resumen</label>
+        <textarea class="ai" id="art-bajada" rows="2" placeholder="Descripción breve que aparece debajo del título…">${esc(art?.bajada||'')}</textarea>
+      </div>
+      <div class="field">
+        <label class="lbl">Contenido completo</label>
+        <textarea class="ai" id="art-cuerpo" rows="6" placeholder="Texto del artículo. Cada línea en blanco separa párrafos.">${esc(art?.cuerpo||'')}</textarea>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label class="lbl">Autor</label>
+          <input class="ai" id="art-autor" value="${esc(art?.autor||'')}" placeholder="Nombre del autor">
+        </div>
+        <div class="field">
+          <label class="lbl">Sala / Grado</label>
+          <input class="ai" id="art-sala" value="${esc(art?.sala||'')}" placeholder="Ej: 3.° Grado A">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label class="lbl">Fecha</label>
+          <input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026">
+        </div>
+        <div class="field">
+          <label class="lbl">URL imagen (Google Drive u otro)</label>
+          <input class="ai" id="art-imagen" value="${esc(art?.imagenUrl||'')}" placeholder="https://drive.google.com/file/d/…">
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl">Edición a la que pertenece</label>
+        <select class="ai" id="art-edicion">
+          <option value="">Sin asignar</option>
+          ${edOpcs}
+        </select>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--rule)">
+      <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
+        <div style="display:flex;gap:8px">
+          ${modoRevision ? `
+            <button class="btn btn-danger btn-sm" onclick="rechazarArticulo('${art?.id}')">Rechazar</button>
+          ` : `
+            <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>
+          `}
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="guardarArticulo('${art?.id||''}','borrador')">Guardar borrador</button>
+          <button class="btn btn-gold btn-sm" onclick="guardarArticulo('${art?.id||''}','publicado')">✅ Guardar y publicar</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  abrirModal('modal-art');
+}
+
+window.guardarArticulo = async function(artId, estado) {
+  const data = {
+    nivel:      document.getElementById('art-nivel').value,
+    tipo:       document.getElementById('art-tipo').value,
+    titulo:     document.getElementById('art-titulo').value.trim(),
+    bajada:     document.getElementById('art-bajada').value.trim(),
+    cuerpo:     document.getElementById('art-cuerpo').value.trim(),
+    autor:      document.getElementById('art-autor').value.trim(),
+    sala:       document.getElementById('art-sala').value.trim(),
+    fecha:      document.getElementById('art-fecha').value.trim(),
+    imagenUrl:  document.getElementById('art-imagen').value.trim(),
+    edicionId:  document.getElementById('art-edicion').value,
+    orden:      parseInt(document.getElementById('art-orden').value) || 99,
+    estado,
+    actualizadoEn: serverTimestamp(),
+  };
+  if (!data.titulo) { toast('El título es obligatorio', 'err'); return; }
+  try {
+    if (artId) {
+      await updateDoc(doc(db,'articulos',artId), data);
+      toast(estado === 'publicado' ? 'Artículo publicado ✓' : 'Artículo guardado ✓');
+    } else {
+      data.creadoEn = serverTimestamp();
+      await addDoc(collection(db,'articulos'), data);
+      toast('Artículo creado ✓');
+    }
+    cerrarModal('modal-art');
+    cargarNotifCount();
+    if (currentTab === 'revision') renderRevision();
+    else if (currentTab === 'articulos') renderArticulos();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+};
+
+window.rechazarArticulo = async function(artId) {
+  if (!confirm('¿Rechazar este artículo? El docente podrá verlo como rechazado.')) return;
+  await updateDoc(doc(db,'articulos',artId), { estado:'rechazado', actualizadoEn:serverTimestamp() });
+  cerrarModal('modal-art');
+  toast('Artículo rechazado');
+  cargarNotifCount();
+  renderRevision();
+};
+
+window.eliminarArticulo = async function(artId) {
+  if (!confirm('¿Eliminar permanentemente este artículo?')) return;
+  await deleteDoc(doc(db,'articulos',artId));
+  toast('Eliminado');
+  renderArticulosFiltrado();
+};
+
+// ═══ DOCENTES ════════════════════════════════════════════════
+async function renderDocentes() {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = `
+    <div style="max-width:560px">
+      <div class="card cp" style="margin-bottom:16px">
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Cómo funcionan los accesos de docentes</div>
+        <div style="font-size:13px;color:var(--ink);line-height:1.7">
+          Los docentes acceden a <strong style="color:var(--gold)">docente.html</strong> con su email y contraseña.<br>
+          Desde ahí pueden enviar artículos que quedan en estado <span class="bdg bdg-rev" style="vertical-align:middle">revisión</span>.<br>
+          Vos los recibís acá en el panel de Revisión para editar y publicar.
+        </div>
+      </div>
+      <div class="card cp">
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Crear usuario docente en Firebase</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+          Andá a <a href="https://console.firebase.google.com" target="_blank" style="color:var(--gold)">console.firebase.google.com</a> → tu proyecto → Authentication → Add user.<br>
+          Poné el email y contraseña del docente. Listo.
+        </div>
+        <div style="background:var(--bg);border-radius:6px;padding:12px;font-family:monospace;font-size:11px;color:var(--muted)">
+          Proyecto: <span style="color:var(--gold)">revista-1ac1c</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══ HELPERS ═════════════════════════════════════════════════
+function formatFecha(ts) {
+  if (!ts) return '—';
+  try { const d = ts.toDate ? ts.toDate() : new Date(ts); return d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}); } catch { return '—'; }
+}
+
+function tiempoDesde(ts) {
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (mins < 2) return 'hace un momento';
+    if (mins < 60) return `hace ${mins} min`;
+    const hs = Math.floor(mins/60);
+    if (hs < 24) return `hace ${hs}h`;
+    return `hace ${Math.floor(hs/24)} día${hs>=48?'s':''}`;
+  } catch { return ''; }
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function mostrarErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+window.abrirModal = function(id) { document.getElementById(id).classList.add('open'); };
+window.cerrarModal = function(id) { document.getElementById(id).classList.remove('open'); };
+
+let toastTimer;
+window.toast = function(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type === 'err' ? '#C84C4C' : type === 'warn' ? '#C89A4C' : '#3AB07A';
+  el.style.color = '#fff';
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3200);
+};
+
+// Cerrar modales al hacer clic afuera
+['modal-art','modal-edicion'].forEach(id => {
+  document.getElementById(id).addEventListener('click', e => {
+    if (e.target.id === id) cerrarModal(id);
+  });
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modal-art'); cerrarModal('modal-edicion'); } });
+</script>
+</body>
+</html>
