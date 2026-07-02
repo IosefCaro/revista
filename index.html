@@ -458,15 +458,18 @@ async function cargarEdicion(edicion) {
   });
 
   // Cargar artículos de esta edición
+  // (sin orderBy en la query: dos where + orderBy pide un índice compuesto extra;
+  // ordenamos "orden" del lado del navegador para evitar ese requisito)
   const snArts = await getDocs(
     query(
       collection(db, 'articulos'),
       where('edicionId', '==', edicion.id),
-      where('estado', '==', 'publicado'),
-      orderBy('orden', 'asc')
+      where('estado', '==', 'publicado')
     )
   );
-  articulosActuales = snArts.docs.map(d => ({ id: d.id, ...d.data() }));
+  articulosActuales = snArts.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.orden ?? 99) - (b.orden ?? 99));
   document.getElementById('header-cant').textContent = articulosActuales.length;
 
   renderFiltroNiveles();
