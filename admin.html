@@ -235,6 +235,7 @@ textarea.ai{resize:vertical;line-height:1.6}
       </button>
       <div class="nav-section">EDICIONES</div>
       <button class="nav-btn" onclick="setTab('ediciones')" id="tab-ediciones"><span>📰</span><span>Ediciones</span></button>
+      <button class="nav-btn" onclick="setTab('diagramar')" id="tab-diagramar"><span>🗞️</span><span>Diagramar</span></button>
       <button class="nav-btn" onclick="setTab('articulos')" id="tab-articulos"><span>✏️</span><span>Artículos</span></button>
       <div class="nav-section">SISTEMA</div>
       <button class="nav-btn" onclick="setTab('docentes')" id="tab-docentes"><span>👥</span><span>Docentes</span></button>
@@ -375,6 +376,7 @@ window.setTab = function(tab) {
   const titles = {
     revision:  ['📋 Revisión', 'Artículos enviados por docentes — revisá, editá y publicá'],
     ediciones: ['📰 Ediciones', 'Gestión de ediciones semanales'],
+    diagramar: ['🗞️ Diagramar', 'Armá la edición, ordená las notas y previsualizá antes de publicar'],
     articulos: ['✏️ Artículos', 'Todos los artículos del sistema'],
     docentes:  ['👥 Docentes', 'Usuarios con acceso de docente'],
   };
@@ -389,7 +391,7 @@ window.setTab = function(tab) {
   if (tab === 'articulos') {
     actionsEl.innerHTML = '<button class="btn btn-gold btn-sm" onclick="abrirModalArticulo()">+ Nuevo artículo</button>';
   }
-  const renders = { revision:renderRevision, ediciones:renderEdiciones, articulos:renderArticulos, docentes:renderDocentes };
+  const renders = { revision:renderRevision, ediciones:renderEdiciones, diagramar:renderDiagramar, articulos:renderArticulos, docentes:renderDocentes };
   renders[tab]?.();
 };
 
@@ -573,6 +575,141 @@ window.despublicarEdicion = async function(edId) {
 window.verEdicion = function(edId) {
   setTab('articulos');
   setTimeout(() => renderArticulos(edId), 100);
+};
+
+// ═══ DIAGRAMAR (armar la edición, ordenar y previsualizar) ════
+let diagramarEdicionId = null;
+
+async function renderDiagramar() {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = '<div class="loading-spin"></div>';
+  try {
+    const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+    const ediciones = snEds.docs.map(d => ({id:d.id,...d.data()}));
+
+    if (!ediciones.length) {
+      pg.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No hay ediciones creadas todavía. Andá a "Ediciones" y creá la semanal primero.</div>';
+      return;
+    }
+    if (!diagramarEdicionId || !ediciones.find(e => e.id === diagramarEdicionId)) {
+      diagramarEdicionId = (ediciones.find(e => e.estado !== 'publicada') || ediciones[0]).id;
+    }
+    const ed = ediciones.find(e => e.id === diagramarEdicionId);
+
+    // Traer artículos aprobados (sin orderBy, para no requerir índice compuesto) y ordenar en JS
+    const snArts = await getDocs(query(collection(db,'articulos'), where('estado','==','publicado')));
+    const todos = snArts.docs.map(d => ({id:d.id,...d.data()}));
+    const enEdicion  = todos.filter(a => a.edicionId === diagramarEdicionId).sort((a,b) => (a.orden??99) - (b.orden??99));
+    const sinAsignar = todos.filter(a => a.edicionId !== diagramarEdicionId);
+
+    pg.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap">
+        <select class="ai" id="diagramar-edicion-select" onchange="cambiarEdicionDiagramar(this.value)" style="width:auto;min-width:260px">
+          ${ediciones.map(e => `<option value="${e.id}" ${e.id===diagramarEdicionId?'selected':''}>${e.numero?'Ed. '+e.numero+' – ':''}${e.titulo||'Sin título'}${e.estado==='publicada'?' (publicada)':''}</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:18px;padding:14px 16px;background:var(--navy);border:1px solid var(--rule);border-radius:8px">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)">${ed?.titulo || 'Sin título'}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${enEdicion.length} nota${enEdicion.length!==1?'s':''} en esta edición · estado: <span class="bdg ${ed?.estado==='publicada'?'bdg-pub':'bdg-bor'}" style="font-size:9px">${ed?.estado||'borrador'}</span></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="window.open('revista.html?previewEdicion=${diagramarEdicionId}','_blank')">👁 Vista previa</button>
+          ${ed?.estado !== 'publicada'
+            ? `<button class="btn btn-gold btn-sm" ${!enEdicion.length?'disabled title="Agregá al menos una nota"':''} onclick="publicarEdicion('${diagramarEdicionId}')">✅ Publicar edición</button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="despublicarEdicion('${diagramarEdicionId}')">Despublicar</button>`
+          }
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:20px;align-items:start" class="diagramar-grid">
+        <div>
+          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">En esta edición · orden de aparición</div>
+          <div id="diagramar-lista">${enEdicion.length ? enEdicion.map((a,i) => htmlDiagramarItem(a,i,enEdicion.length)).join('') : '<div class="bloques-empty">Todavía no hay notas acá. Agregá desde la columna derecha.</div>'}</div>
+        </div>
+        <div>
+          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Aprobadas, sin asignar acá</div>
+          <div id="diagramar-disponibles">${sinAsignar.length ? sinAsignar.map(a => htmlDisponibleItem(a)).join('') : '<div class="bloques-empty">No hay más notas aprobadas disponibles.</div>'}</div>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    pg.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+  }
+}
+
+window.cambiarEdicionDiagramar = function(edId) {
+  diagramarEdicionId = edId;
+  renderDiagramar();
+};
+
+function htmlDiagramarItem(art, i, total) {
+  const niv = NIVELES[art.nivel] || {label:art.nivel||'—',color:'#888',icon:'·'};
+  return `
+    <div style="background:var(--navy);border:1px solid var(--rule);border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="moverDiagramar('${art.id}',-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 8px" onclick="moverDiagramar('${art.id}',1)" ${i===total-1?'disabled':''}>↓</button>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:9px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:${niv.color}">${niv.icon} ${niv.label}</div>
+        <div style="font-size:13.5px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${art.titulo||'Sin título'}</div>
+        <div style="font-size:10.5px;color:var(--muted)">${art.autor||''} ${art.sala?'· '+art.sala:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalArticulo('${art.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="quitarDeEdicion('${art.id}')">Quitar</button>
+      </div>
+    </div>
+  `;
+}
+
+function htmlDisponibleItem(art) {
+  const niv = NIVELES[art.nivel] || {label:art.nivel||'—',color:'#888',icon:'·'};
+  const otraEd = art.edicionId ? ' · en otra edición' : '';
+  return `
+    <div style="background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:11px 13px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:9px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:${niv.color}">${niv.icon} ${niv.label}${otraEd}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${art.titulo||'Sin título'}</div>
+      </div>
+      <button class="btn btn-gold btn-sm" style="flex-shrink:0" onclick="agregarAEdicion('${art.id}')">＋ Agregar</button>
+    </div>
+  `;
+}
+
+window.agregarAEdicion = async function(artId) {
+  try {
+    const snArts = await getDocs(query(collection(db,'articulos'), where('estado','==','publicado')));
+    const cant = snArts.docs.map(d=>d.data()).filter(a=>a.edicionId===diagramarEdicionId).length;
+    await updateDoc(doc(db,'articulos',artId), { edicionId: diagramarEdicionId, orden: cant + 1, actualizadoEn: serverTimestamp() });
+    toast('Agregada a la edición ✓');
+    renderDiagramar();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+};
+
+window.quitarDeEdicion = async function(artId) {
+  try {
+    await updateDoc(doc(db,'articulos',artId), { edicionId:'', actualizadoEn: serverTimestamp() });
+    toast('Quitada de la edición');
+    renderDiagramar();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
+};
+
+window.moverDiagramar = async function(artId, dir) {
+  try {
+    const snArts = await getDocs(query(collection(db,'articulos'), where('estado','==','publicado')));
+    let enEdicion = snArts.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(a=>a.edicionId===diagramarEdicionId)
+      .sort((a,b)=>(a.orden??99)-(b.orden??99));
+    const i = enEdicion.findIndex(a => a.id === artId);
+    const j = i + dir;
+    if (i<0 || j<0 || j>=enEdicion.length) return;
+    [enEdicion[i], enEdicion[j]] = [enEdicion[j], enEdicion[i]];
+    await Promise.all(enEdicion.map((a, idx) => updateDoc(doc(db,'articulos',a.id), { orden: idx+1 })));
+    renderDiagramar();
+  } catch(e) { toast('Error: ' + e.message, 'err'); }
 };
 
 // ═══ ARTÍCULOS ═══════════════════════════════════════════════
