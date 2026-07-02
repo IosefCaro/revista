@@ -55,6 +55,29 @@ html,body{min-height:100%;font-family:'Lato',sans-serif;background:var(--bg);col
 textarea.ai{resize:vertical;line-height:1.65}
 .ai-help{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
 
+/* BLOQUES DE CONTENIDO */
+.bloques-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.bloques-empty{
+  padding:22px 16px;text-align:center;color:var(--muted);font-size:12.5px;
+  border:1px dashed var(--rule);border-radius:8px;line-height:1.6;
+}
+.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:12px}
+.bloque-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bloque-tag{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale)}
+.bloque-ctrls{display:flex;gap:5px}
+.bloque-ctrls button{
+  width:24px;height:24px;border-radius:5px;border:1px solid var(--rule);background:var(--navy);
+  color:var(--ink);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;padding:0;
+}
+.bloque-ctrls button:hover:not(:disabled){border-color:var(--gold)88;color:var(--gold)}
+.bloque-ctrls button:disabled{opacity:.3;cursor:not-allowed}
+.bloque-ctrls button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
+.bloque-item .ai{margin-bottom:0}
+.bloque-item .ai + .ai{margin-top:6px}
+.bloque-add-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.bloque-add-row .btn{font-size:10px;padding:8px 14px}
+
 /* BOTONES */
 .btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:4px;font-weight:900;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:10px 22px;transition:all .15s;font-family:inherit}
 .btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold-pale)}
@@ -171,9 +194,14 @@ textarea.ai{resize:vertical;line-height:1.65}
       </div>
 
       <div class="field">
-        <label class="lbl lbl-required">Contenido</label>
-        <textarea class="ai" id="art-cuerpo" rows="7" placeholder="Escribí acá el texto completo. Podés dejar una línea en blanco entre párrafos."></textarea>
-        <span class="ai-help">Contá qué pasó, cuándo, quiénes participaron y por qué fue importante.</span>
+        <label class="lbl lbl-required">Contenido del artículo</label>
+        <span class="ai-help" style="margin-top:-2px;margin-bottom:2px">Armá la nota como quieras: agregá párrafos de texto, fotos y videos, y ordenalos con las flechas ↑↓.</span>
+        <div class="bloques-list" id="bloques-editor"></div>
+        <div class="bloque-add-row">
+          <button type="button" class="btn btn-ghost" onclick="agregarBloque('texto')">＋ Texto</button>
+          <button type="button" class="btn btn-ghost" onclick="agregarBloque('imagen')">＋ Foto</button>
+          <button type="button" class="btn btn-ghost" onclick="agregarBloque('video')">＋ Video</button>
+        </div>
       </div>
 
       <div class="grid2">
@@ -187,20 +215,11 @@ textarea.ai{resize:vertical;line-height:1.65}
         </div>
       </div>
 
-      <div class="field">
-        <label class="lbl">Imagen (link de Google Drive)</label>
-        <input class="ai" id="art-imagen" placeholder="https://drive.google.com/file/d/…/view?usp=sharing">
-        <span class="ai-help">Subí la foto a tu Google Drive, hacé clic derecho → "Obtener enlace" → "Cualquier persona con el enlace" → copiá el link acá.</span>
-      </div>
-
       <div style="padding:12px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--rule);margin-bottom:14px">
-        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">📌 Sobre las imágenes</div>
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">📌 Sobre fotos y videos</div>
         <div style="font-size:12px;color:var(--muted);line-height:1.65">
-          1. Abrí <strong style="color:var(--ink)">drive.google.com</strong><br>
-          2. Subí la foto<br>
-          3. Clic derecho sobre la foto → <strong style="color:var(--ink)">Compartir</strong><br>
-          4. Cambiá a <strong style="color:var(--ink)">"Cualquier persona con el enlace"</strong><br>
-          5. Copiá el link y pegalo arriba
+          <strong style="color:var(--ink)">Fotos:</strong> subí la foto a Google Drive → clic derecho → "Compartir" → "Cualquier persona con el enlace" → copiá el link en el bloque de foto.<br>
+          <strong style="color:var(--ink)">Videos:</strong> pegá un link de YouTube, Vimeo, Google Drive, o un archivo .mp4. Se va a mostrar reproducible dentro del artículo.
         </div>
       </div>
 
@@ -247,6 +266,94 @@ const auth = getAuth(app);
 
 let currentUser = null;
 
+// ═══ EDITOR DE BLOQUES (texto / foto / video) ═══════════════════
+let bloques = [];
+
+function nuevoBloqueId() { return 'b_' + Math.random().toString(36).slice(2,9); }
+
+function bloquesIniciales() {
+  return [{ id: nuevoBloqueId(), tipo: 'texto', texto: '' }];
+}
+
+window.agregarBloque = function(tipo) {
+  const b = { id: nuevoBloqueId(), tipo };
+  if (tipo === 'texto')  b.texto = '';
+  if (tipo === 'imagen') { b.url = ''; b.caption = ''; b.layout = 'full'; }
+  if (tipo === 'video')  { b.url = ''; b.caption = ''; }
+  bloques.push(b);
+  renderBloquesEditor();
+};
+
+window.eliminarBloque = function(id) {
+  bloques = bloques.filter(b => b.id !== id);
+  if (!bloques.length) bloques = bloquesIniciales();
+  renderBloquesEditor();
+};
+
+window.moverBloque = function(id, dir) {
+  const i = bloques.findIndex(b => b.id === id);
+  const j = i + dir;
+  if (i < 0 || j < 0 || j >= bloques.length) return;
+  [bloques[i], bloques[j]] = [bloques[j], bloques[i]];
+  renderBloquesEditor();
+};
+
+window.actualizarBloque = function(id, campo, valor) {
+  const b = bloques.find(b => b.id === id);
+  if (b) b[campo] = valor;
+};
+
+function escB(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function htmlBloque(b, i, total) {
+  const ctrls = `
+    <div class="bloque-ctrls">
+      <button type="button" onclick="moverBloque('${b.id}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
+      <button type="button" onclick="moverBloque('${b.id}',1)" ${i===total-1?'disabled':''} title="Bajar">↓</button>
+      <button type="button" class="del" onclick="eliminarBloque('${b.id}')" title="Eliminar">✕</button>
+    </div>`;
+
+  if (b.tipo === 'texto') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">📝 Texto</span>${ctrls}</div>
+        <textarea class="ai" rows="4" placeholder="Escribí un párrafo…" oninput="actualizarBloque('${b.id}','texto',this.value)">${escB(b.texto)}</textarea>
+      </div>`;
+  }
+  if (b.tipo === 'imagen') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">🖼️ Foto</span>${ctrls}</div>
+        <input class="ai" placeholder="Link de Google Drive u otra imagen" value="${escB(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
+        <input class="ai" placeholder="Pie de foto (opcional)" value="${escB(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
+        <select class="ai" onchange="actualizarBloque('${b.id}','layout',this.value)">
+          <option value="full" ${(b.layout||'full')==='full'?'selected':''}>Ancho completo</option>
+          <option value="left" ${b.layout==='left'?'selected':''}>A la izquierda (texto al costado)</option>
+          <option value="right" ${b.layout==='right'?'selected':''}>A la derecha (texto al costado)</option>
+        </select>
+      </div>`;
+  }
+  if (b.tipo === 'video') {
+    return `
+      <div class="bloque-item">
+        <div class="bloque-head"><span class="bloque-tag">🎬 Video</span>${ctrls}</div>
+        <input class="ai" placeholder="Link de YouTube, Vimeo, Drive o archivo .mp4" value="${escB(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
+        <input class="ai" placeholder="Descripción del video (opcional)" value="${escB(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
+      </div>`;
+  }
+  return '';
+}
+
+function renderBloquesEditor() {
+  const cont = document.getElementById('bloques-editor');
+  if (!cont) return;
+  if (!bloques.length) {
+    cont.innerHTML = '<div class="bloques-empty">Todavía no agregaste contenido.<br>Usá los botones de abajo para sumar texto, fotos o videos.</div>';
+    return;
+  }
+  cont.innerHTML = bloques.map((b,i) => htmlBloque(b, i, bloques.length)).join('');
+}
+
 onAuthStateChanged(auth, user => {
   if (user) {
     currentUser = user;
@@ -255,6 +362,8 @@ onAuthStateChanged(auth, user => {
     const nombre = user.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
     document.getElementById('welcome-name').textContent = nombre;
     document.getElementById('art-autor').value = nombre;
+    bloques = bloquesIniciales();
+    renderBloquesEditor();
     cargarMisArticulos();
   } else {
     currentUser = null;
@@ -283,9 +392,17 @@ window.doLogout = async function() { await signOut(auth); };
 
 window.enviarArticulo = async function() {
   const titulo = document.getElementById('art-titulo').value.trim();
-  const cuerpo = document.getElementById('art-cuerpo').value.trim();
+
+  // Limpiar bloques vacíos y armar campos derivados (compatibilidad)
+  const bloquesValidos = bloques.filter(b =>
+    (b.tipo === 'texto'  && b.texto && b.texto.trim()) ||
+    (b.tipo !== 'texto'  && b.url   && b.url.trim())
+  );
+  const cuerpo = bloquesValidos.filter(b => b.tipo==='texto').map(b => b.texto.trim()).join('\n\n');
+  const primeraImagen = bloquesValidos.find(b => b.tipo === 'imagen');
+
   if (!titulo) { toast('El título es obligatorio', 'err'); return; }
-  if (!cuerpo) { toast('El contenido es obligatorio', 'err'); return; }
+  if (!bloquesValidos.length) { toast('Agregá al menos un bloque de contenido', 'err'); return; }
 
   const btn = document.getElementById('btn-enviar');
   btn.disabled = true; btn.textContent = 'Enviando…';
@@ -297,9 +414,10 @@ window.enviarArticulo = async function() {
       titulo,
       bajada:         document.getElementById('art-bajada').value.trim(),
       cuerpo,
+      bloques:        bloquesValidos,
       autor:          document.getElementById('art-autor').value.trim(),
       sala:           document.getElementById('art-sala').value.trim(),
-      imagenUrl:      document.getElementById('art-imagen').value.trim(),
+      imagenUrl:      primeraImagen ? primeraImagen.url.trim() : '',
       docenteEmail:   currentUser.email,
       docenteNombre:  document.getElementById('art-autor').value.trim() || currentUser.email,
       estado:         'revision',
@@ -319,10 +437,12 @@ window.enviarArticulo = async function() {
 };
 
 window.resetForm = function() {
-  ['art-titulo','art-bajada','art-cuerpo','art-sala','art-imagen'].forEach(id => document.getElementById(id).value='');
+  ['art-titulo','art-bajada','art-sala'].forEach(id => document.getElementById(id).value='');
   document.getElementById('art-nivel').value='institucional';
   document.getElementById('art-tipo').value='noticia';
   document.getElementById('exito-box').style.display='none';
+  bloques = bloquesIniciales();
+  renderBloquesEditor();
 };
 
 async function cargarMisArticulos() {
