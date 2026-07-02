@@ -5,370 +5,531 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portal Docente – Revista Iosef Caro</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
 
 :root {
-  --bg:#0E1628;--navy:#1A2848;--card:#1E3060;
-  --gold:#C9A84C;--gold-pale:#E8D5A0;
-  --white:#fff;--ink:#F0EDE6;--muted:#8888AA;
-  --rule:#2A3A6A;--ok:#3AB07A;--err:#C84C4C;--warn:#C89A4C;
+  --bg:#0E1628; --navy:#1A2848; --card:#1E3060;
+  --gold:#C9A84C; --gold-pale:#E8D5A0;
+  --white:#fff; --ink:#F0EDE6; --muted:#8888AA;
+  --rule:#2A3A6A; --dim:#1E2D52;
+  --ok:#3AB07A; --err:#C84C4C; --warn:#C89A4C;
 }
+
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%;font-family:'Lato',sans-serif;background:var(--bg);color:var(--ink)}
 ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--rule);border-radius:4px}
 
-.wrap{max-width:680px;margin:0 auto;padding:24px 16px 60px}
-
-/* HEADER */
-.portal-header{
-  background:linear-gradient(160deg,var(--bg) 0%,var(--navy) 70%);
-  padding:24px 20px 28px;border-bottom:1px solid rgba(201,168,76,.2);
-  text-align:center;margin-bottom:0;
+/* ── HEADER ── */
+.site-header{
+  background:linear-gradient(160deg,var(--bg) 0%,var(--navy) 60%,#1E3060 100%);
+  border-bottom:1px solid rgba(201,168,76,.2);
+  position:sticky;top:0;z-index:100;
 }
-.portal-header .star{font-size:32px;color:var(--gold);margin-bottom:8px}
-.portal-header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--white)}
-.portal-header p{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
-
-/* LOGIN */
-#login-section{padding:32px 0}
-.login-box{background:var(--navy);border:1px solid var(--rule);border-radius:12px;padding:28px;max-width:400px;margin:0 auto}
-
-/* SECCIONES */
-#app-section{display:none}
-.section-title{
-  font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);
-  margin:28px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule);
+.header-inner{
+  max-width:900px;margin:0 auto;padding:14px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
 }
-.section-sub{font-size:12px;color:var(--muted);margin-top:-10px;margin-bottom:16px}
+.header-brand{display:flex;align-items:center;gap:10px}
+.header-brand img{height:28px}
+.header-brand-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;font-style:italic;color:rgba(255,255,255,.9)}
+.header-user{display:flex;align-items:center;gap:10px}
+.header-name{font-size:12px;color:var(--muted)}
+.btn-salir{background:none;border:1px solid var(--rule);color:var(--muted);font-family:inherit;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:6px 14px;border-radius:20px;cursor:pointer;transition:all .15s}
+.btn-salir:hover{border-color:var(--err);color:var(--err)}
 
-/* FORM */
-.form-card{background:var(--navy);border:1px solid var(--rule);border-radius:10px;padding:22px 20px}
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+/* ── TABS ── */
+.tabs-bar{
+  background:rgba(255,255,255,.03);border-bottom:1px solid rgba(201,168,76,.1);
+  position:sticky;top:56px;z-index:99;
+}
+.tabs-inner{max-width:900px;margin:0 auto;padding:0 20px;display:flex;gap:0}
+.tab-btn{
+  background:none;border:none;cursor:pointer;font-family:'Lato',sans-serif;
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);padding:14px 18px;border-bottom:2px solid transparent;
+  transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.tab-btn:hover{color:var(--white)}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-notif{
+  background:var(--err);color:#fff;border-radius:50%;
+  width:16px;height:16px;font-size:9px;font-weight:900;
+  display:inline-flex;align-items:center;justify-content:center;
+}
+
+/* ── LAYOUT ── */
+.page{max-width:900px;margin:0 auto;padding:28px 20px 60px}
+.tab-content{display:none}.tab-content.active{display:block}
+
+/* ── LOGIN ── */
+.login-wrap{
+  min-height:80vh;display:flex;align-items:center;justify-content:center;padding:40px 20px;
+}
+.login-box{
+  background:var(--navy);border:1px solid var(--rule);border-radius:16px;
+  padding:36px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,.5);
+}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .star{font-size:34px;color:var(--gold)}
+.login-logo h1{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-top:8px}
+.login-logo p{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+
+/* ── FORMULARIO ── */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
 .lbl{font-size:8.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
-.lbl-required::after{content:' *';color:var(--gold)}
+.lbl-req::after{content:' *';color:var(--gold)}
 .ai{
-  width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--rule);
+  width:100%;padding:9px 11px;background:var(--bg);border:1px solid var(--rule);
   border-radius:6px;color:var(--ink);font-size:14px;outline:none;
   transition:border-color .15s;font-family:inherit;
 }
 .ai:focus{border-color:var(--gold)88}
-textarea.ai{resize:vertical;line-height:1.65}
 .ai-help{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.grid2{grid-template-columns:1fr}}
 
-/* BLOQUES DE CONTENIDO */
-.bloques-list{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
-.bloques-empty{
-  padding:22px 16px;text-align:center;color:var(--muted);font-size:12.5px;
-  border:1px dashed var(--rule);border-radius:8px;line-height:1.6;
+/* ── CARD ── */
+.card{background:var(--navy);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.card-header{
+  padding:12px 16px;background:var(--card);border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
-.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:12px}
-.bloque-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.bloque-tag{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale)}
-.bloque-ctrls{display:flex;gap:5px}
+.card-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)}
+.card-body{padding:18px 16px}
+
+/* ── BOTONES ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;
+  border-radius:4px;font-weight:900;font-size:11px;letter-spacing:1px;
+  text-transform:uppercase;padding:9px 20px;transition:all .15s;font-family:inherit;
+}
+.btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold-pale)}
+.btn-ghost{background:none;border:1px solid var(--rule);color:var(--muted)}.btn-ghost:hover{border-color:var(--gold)55;color:var(--gold)}
+.btn-ok{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
+.btn-danger{background:var(--err)22;color:var(--err);border:1px solid var(--err)44}
+.btn-sm{padding:5px 11px;font-size:10px}
+.btn-full{width:100%;justify-content:center}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ── EDITOR RICH TEXT ── */
+.rte-toolbar{
+  display:flex;align-items:center;gap:2px;flex-wrap:wrap;
+  padding:7px 10px;background:var(--card);border-bottom:1px solid var(--rule);
+}
+.rte-toolbar button{
+  width:28px;height:28px;border-radius:4px;border:1px solid transparent;
+  background:none;color:var(--muted);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;
+}
+.rte-toolbar button:hover{background:var(--navy);color:var(--white);border-color:var(--rule)}
+.rte-toolbar .rte-sep{width:1px;height:20px;background:var(--rule);margin:0 3px;flex-shrink:0}
+.rte-toolbar select{
+  background:var(--navy);border:1px solid var(--rule);color:var(--muted);
+  border-radius:4px;padding:3px 6px;font-size:11px;cursor:pointer;height:28px;outline:none;
+}
+.rte-toolbar select:hover{border-color:var(--gold)55;color:var(--white)}
+.rte-toolbar .color-btn{position:relative;overflow:hidden}
+.rte-toolbar .color-btn input[type=color]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;
+}
+.rte-body{
+  min-height:200px;padding:16px;outline:none;
+  font-family:'EB Garamond',serif;font-size:15px;line-height:1.78;color:#1A1A2E;
+  background:#FAF7F1;
+}
+.rte-body:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.rte-body p{margin-bottom:6px}
+.rte-body h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:#1A1A2E;margin:14px 0 6px}
+.rte-body h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#1A1A2E;margin:10px 0 4px}
+.rte-body blockquote{border-left:3px solid #C9A84C;padding-left:12px;margin:10px 0;font-style:italic;color:#38385A}
+.rte-body ul,.rte-body ol{padding-left:20px;margin:6px 0}
+.rte-body li{margin-bottom:3px}
+.rte-body a{color:#C9A84C;text-decoration:underline}
+
+/* ── STATUS BAR ── */
+.status-bar{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  padding:6px 12px;background:var(--dim);border-top:1px solid var(--rule);
+  font-size:10px;color:var(--muted);gap:8px;
+}
+.autosave-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--muted);
+  flex-shrink:0;transition:background .3s;
+}
+.autosave-dot.saving{background:var(--warn);animation:pulse .6s infinite}
+.autosave-dot.saved{background:var(--ok)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── BLOQUES ── */
+.bloques-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.bloque-item:focus-within{border-color:var(--gold)55}
+.bloque-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 10px;background:var(--card);border-bottom:1px solid var(--rule);
+}
+.bloque-tag{font-size:9.5px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale)}
+.bloque-ctrls{display:flex;gap:4px}
 .bloque-ctrls button{
-  width:24px;height:24px;border-radius:5px;border:1px solid var(--rule);background:var(--navy);
-  color:var(--ink);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
-  transition:all .15s;padding:0;
+  width:22px;height:22px;border-radius:4px;border:1px solid var(--rule);
+  background:var(--navy);color:var(--ink);cursor:pointer;font-size:11px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0;
 }
 .bloque-ctrls button:hover:not(:disabled){border-color:var(--gold)88;color:var(--gold)}
 .bloque-ctrls button:disabled{opacity:.3;cursor:not-allowed}
 .bloque-ctrls button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
-.bloque-item .ai{margin-bottom:0}
-.bloque-item .ai + .ai{margin-top:6px}
-.bloque-add-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
-.bloque-add-row .btn{font-size:10px;padding:8px 14px}
-
-/* BOTONES */
-.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:4px;font-weight:900;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:10px 22px;transition:all .15s;font-family:inherit}
-.btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold-pale)}
-.btn-ghost{background:none;border:1px solid var(--rule);color:var(--muted)}.btn-ghost:hover{border-color:var(--gold)55;color:var(--gold)}
-.btn-full{width:100%;justify-content:center}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-
-/* ARTÍCULOS ENVIADOS */
-.art-item{
-  background:var(--card);border:1px solid var(--rule);border-radius:8px;
-  padding:14px 16px;margin-bottom:8px;
+.bloque-add-row{display:flex;gap:7px;flex-wrap:wrap}
+.bloques-empty{
+  padding:18px;text-align:center;color:var(--muted);font-size:12px;
+  border:1px dashed var(--rule);border-radius:8px;line-height:1.6;
 }
-.art-item-titulo{font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px}
-.art-item-meta{font-size:11px;color:var(--muted)}
+
+/* ── UPLOAD ── */
+.upload-zone{
+  border:2px dashed var(--rule);border-radius:8px;padding:18px;
+  text-align:center;cursor:pointer;transition:all .18s;background:var(--bg);
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--gold);background:rgba(201,168,76,.06)}
+.upload-progress{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-top:8px;display:none}
+.upload-progress-fill{height:100%;background:var(--gold);transition:width .2s;width:0}
+.img-thumb{max-width:100%;max-height:130px;object-fit:cover;border-radius:5px;margin-top:8px;display:block}
+
+/* ── MIS ARTÍCULOS ── */
+.art-card{
+  background:var(--navy);border:1px solid var(--rule);border-radius:10px;
+  padding:16px 18px;margin-bottom:10px;
+}
+.art-card-titulo{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--white);margin-bottom:6px}
+.art-card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
 .bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
 .bdg-pub{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
 .bdg-rev{background:var(--warn)22;color:var(--warn);border:1px solid var(--warn)44}
 .bdg-bor{background:var(--rule)33;color:var(--muted);border:1px solid var(--rule)}
 .bdg-rej{background:var(--err)22;color:var(--err);border:1px solid var(--err)44}
 
-/* LOADING */
-.spin{width:28px;height:28px;border:2px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ── PREVIEW ── */
+.preview-panel{
+  background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  overflow:hidden;position:sticky;top:112px;
+}
+.preview-header{
+  padding:10px 14px;border-bottom:1px solid var(--rule);
+  font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.preview-body{
+  padding:16px;font-family:'EB Garamond',serif;font-size:13px;
+  line-height:1.75;color:#1A1A2E;background:#FAF7F1;min-height:200px;max-height:480px;overflow-y:auto;
+}
+.preview-body .pk{font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:3px;text-transform:uppercase;margin-bottom:7px}
+.preview-body .pt{font-family:'Playfair Display',serif;font-weight:900;font-size:17px;line-height:1.1;margin-bottom:7px;color:#1A1A2E}
+.preview-body .pb{font-family:'EB Garamond',serif;font-style:italic;font-size:12.5px;color:#38385A;border-bottom:1px solid #D4C9A8;padding-bottom:9px;margin-bottom:11px}
+.preview-body .pc{font-family:'EB Garamond',serif;font-size:13px;line-height:1.75;color:#1A1A2E}
+.preview-body .pc::first-letter{font-family:'Playfair Display',serif;font-size:3em;font-weight:900;float:left;line-height:.76;margin-right:4px;margin-top:3px;color:#C9A84C}
+.preview-body blockquote{border-left:2.5px solid #C9A84C;padding-left:10px;margin:9px 0;font-style:italic;color:#38385A;font-size:12px}
+.preview-body h2{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;margin:11px 0 4px;color:#1A1A2E}
+.preview-body h3{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;margin:9px 0 3px;color:#1A1A2E}
+.preview-body img{max-width:100%;border-radius:4px;margin:7px 0}
+.preview-body .pw{font-size:9px;color:var(--muted);border-top:1px solid var(--rule);padding-top:8px;margin-top:10px;font-family:'Lato',sans-serif}
 
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+/* ── ÉXITO ── */
+.exito-box{
+  background:var(--ok)18;border:1px solid var(--ok)44;border-radius:12px;
+  padding:28px;text-align:center;margin-top:20px;display:none;
+}
+.exito-box h3{font-family:'Playfair Display',serif;font-size:22px;color:var(--ok);margin-bottom:8px}
+.exito-box p{font-size:13px;color:var(--muted);line-height:1.6}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.4);animation:tIn .2s ease;display:none}
+/* ── BORRADORES ── */
+.borrador-card{
+  background:var(--bg);border:1px dashed var(--rule);border-radius:8px;
+  padding:13px 15px;margin-bottom:8px;cursor:pointer;transition:all .15s;
+}
+.borrador-card:hover{border-color:var(--gold)55;background:rgba(201,168,76,.04)}
+.borrador-titulo{font-size:13px;font-weight:700;color:var(--white);margin-bottom:3px}
+.borrador-meta{font-size:10px;color:var(--muted)}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;
+  white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.5);animation:tIn .2s ease;display:none;
+}
 @keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-
-.exito-box{background:var(--ok)18;border:1px solid var(--ok)44;border-radius:10px;padding:20px;text-align:center;margin-top:16px;display:none}
-.exito-box h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--ok);margin-bottom:6px}
-.exito-box p{font-size:13px;color:var(--muted)}
+.spin{width:28px;height:28px;border:2px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:24px auto}
 </style>
 </head>
 <body>
 
-<div class="portal-header">
-  <div class="star">✡</div>
-  <h1>Portal Docente</h1>
-  <p>Revista Institucional · Colegio Iosef Caro</p>
-</div>
-
-<div class="wrap">
-
-  <!-- LOGIN -->
-  <div id="login-section">
-    <div class="login-box">
-      <div style="margin-bottom:20px;font-size:13px;color:var(--muted);line-height:1.6;text-align:center">
-        Ingresá con tu cuenta institucional para enviar artículos a la revista.
-      </div>
-      <div class="field">
-        <label class="lbl">Email institucional</label>
-        <input class="ai" type="email" id="login-email" placeholder="tu@iosefcaro.edu.ar" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div class="field">
-        <label class="lbl">Contraseña</label>
-        <input class="ai" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div id="login-err" style="font-size:12px;color:var(--err);display:none;padding:8px 12px;background:var(--err)22;border-radius:6px;margin-bottom:12px"></div>
-      <button class="btn btn-gold btn-full" onclick="doLogin()" id="login-btn">Ingresar →</button>
+<!-- HEADER (visible solo cuando está logueado) -->
+<header class="site-header" id="site-header" style="display:none">
+  <div class="header-inner">
+    <div class="header-brand">
+      <img src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="Logo" onerror="this.style.display='none'">
+      <span class="header-brand-name">Colegio Rabino Iosef Caro</span>
+    </div>
+    <div class="header-user">
+      <span class="header-name" id="header-name">—</span>
+      <button class="btn-salir" onclick="doLogout()">Salir</button>
     </div>
   </div>
+</header>
 
-  <!-- APP -->
-  <div id="app-section">
-    <!-- Bienvenida -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 20px;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-size:13px;color:var(--muted)">Bienvenida/o,</div>
-        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--white)" id="welcome-name">—</div>
+<!-- TABS (visible cuando está logueado) -->
+<div class="tabs-bar" id="tabs-bar" style="display:none">
+  <div class="tabs-inner">
+    <button class="tab-btn active" onclick="setTab('nuevo')" id="tab-nuevo">✏️ Nuevo artículo</button>
+    <button class="tab-btn" onclick="setTab('borradores')" id="tab-borradores">
+      📝 Mis borradores <span class="tab-notif" id="notif-borradores" style="display:none">0</span>
+    </button>
+    <button class="tab-btn" onclick="setTab('enviados')" id="tab-enviados">📤 Artículos enviados</button>
+  </div>
+</div>
+
+<!-- LOGIN (cuando no está logueado) -->
+<div class="login-wrap" id="login-section">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="star">✡</div>
+      <h1>Portal Docente</h1>
+      <p>Revista Institucional · Iosef Caro</p>
+    </div>
+    <div class="field">
+      <label class="lbl">Email institucional</label>
+      <input class="ai" type="email" id="login-email" placeholder="tu@iosefcaro.edu.ar" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="field">
+      <label class="lbl">Contraseña</label>
+      <input class="ai" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-err" style="font-size:12px;color:var(--err);display:none;padding:8px 12px;background:var(--err)22;border-radius:6px;margin-bottom:12px"></div>
+    <button class="btn btn-gold btn-full" onclick="doLogin()" id="login-btn">Ingresar →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-section" style="display:none">
+
+  <div class="page">
+
+    <!-- ── TAB: NUEVO ARTÍCULO ── -->
+    <div class="tab-content active" id="content-nuevo">
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+
+        <!-- FORMULARIO -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+            <div>
+              <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white)">Nuevo artículo</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">Lo revisará el equipo editorial antes de publicarse.</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="setTab('borradores')">Ver borradores →</button>
+          </div>
+
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header"><span class="card-title">Información general</span></div>
+            <div class="card-body">
+              <div class="grid2">
+                <div class="field">
+                  <label class="lbl lbl-req">Nivel educativo</label>
+                  <select class="ai" id="art-nivel" onchange="actualizarPreview()">
+                    <option value="institucional">■ Institucional</option>
+                    <option value="inicial">✦ Nivel Inicial</option>
+                    <option value="primaria">◆ Nivel Primario</option>
+                    <option value="secundaria">▲ Nivel Secundario</option>
+                    <option value="reshit">✡ Reshit</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="lbl lbl-req">Tipo de contenido</label>
+                  <select class="ai" id="art-tipo">
+                    <option value="noticia">📰 Noticia</option>
+                    <option value="evento">🎉 Evento / Acto</option>
+                    <option value="proyecto">🔬 Proyecto pedagógico</option>
+                    <option value="galeria">📸 Galería de fotos</option>
+                    <option value="comunicado">📢 Comunicado</option>
+                    <option value="aviso">📌 Aviso</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label class="lbl lbl-req">Título</label>
+                <input class="ai" id="art-titulo" placeholder="Ej: Semana de la Naturaleza en el Huerto Escolar" oninput="actualizarPreview();marcarCambio()">
+              </div>
+              <div class="field">
+                <label class="lbl">Bajada (frase de presentación)</label>
+                <textarea class="ai" id="art-bajada" rows="2" placeholder="Una frase breve que resume el artículo…" oninput="actualizarPreview();marcarCambio()"></textarea>
+                <span class="ai-help">Aparece en itálica debajo del título. Opcional pero recomendado.</span>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label class="lbl">Tu nombre</label>
+                  <input class="ai" id="art-autor" placeholder="Ej: Maestra Daniela R.">
+                </div>
+                <div class="field">
+                  <label class="lbl">Sala / Grado / Grupo</label>
+                  <input class="ai" id="art-sala" placeholder="Ej: Sala Azul · 3.° Grado A">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- EDITOR DE CONTENIDO -->
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-header">
+              <span class="card-title">Contenido</span>
+              <span style="font-size:10px;color:var(--muted)">Combiná texto, fotos y videos</span>
+            </div>
+            <div class="card-body" style="padding:12px">
+              <div class="bloques-list" id="bloques-editor"></div>
+              <div class="bloque-add-row">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('texto')">＋ Texto</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('imagen')">⬆ Foto</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('video')">▶ Video</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('separador')">— Separador</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ÉXITO -->
+          <div class="exito-box" id="exito-box">
+            <h3>✅ ¡Artículo enviado!</h3>
+            <p>El equipo editorial lo revisará y te avisarán cuando esté publicado.<br>Podés ver el estado en la pestaña "Artículos enviados".</p>
+            <button class="btn btn-ghost" onclick="resetForm()" style="margin-top:16px">✏️ Escribir otro artículo</button>
+          </div>
+
+          <!-- STATUS BAR -->
+          <div class="status-bar" id="status-bar">
+            <div style="display:flex;align-items:center;gap:6px">
+              <div class="autosave-dot" id="autosave-dot"></div>
+              <span id="autosave-lbl">Sin guardar</span>
+            </div>
+            <div style="display:flex;gap:14px">
+              <span id="word-count">0 palabras</span>
+              <span id="read-time">0 min lectura</span>
+            </div>
+          </div>
+
+          <!-- ACCIONES -->
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="guardarBorrador()" id="btn-borrador">💾 Guardar borrador</button>
+            <button class="btn btn-gold" onclick="enviarArticulo()" id="btn-enviar" style="flex:1;justify-content:center">
+              Enviar para revisión →
+            </button>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--muted);text-align:center">
+            Una vez enviado, el admin lo revisará antes de publicarlo en la revista.
+          </div>
+        </div>
+
+        <!-- PREVIEW EN TIEMPO REAL -->
+        <div>
+          <div class="preview-panel">
+            <div class="preview-header">
+              <span>Vista previa</span>
+              <span style="font-size:9px">Se actualiza al escribir</span>
+            </div>
+            <div class="preview-body" id="preview-live">
+              <div style="color:#aaa;font-style:italic;font-size:12px;text-align:center;padding:20px 10px">Empezá a escribir para ver la previsualización…</div>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <button class="btn btn-ghost" onclick="doLogout()" style="font-size:10px">Salir</button>
     </div>
 
-    <!-- FORM NUEVO ARTÍCULO -->
-    <div class="section-title">Enviar nuevo artículo</div>
-    <p class="section-sub">Una vez enviado, el administrador lo revisará y publicará.</p>
-
-    <div class="form-card">
-      <div class="grid2">
-        <div class="field">
-          <label class="lbl lbl-required">Nivel educativo</label>
-          <select class="ai" id="art-nivel">
-            <option value="institucional">■ Institucional</option>
-            <option value="inicial">✦ Nivel Inicial</option>
-            <option value="primaria">◆ Nivel Primario</option>
-            <option value="secundaria">▲ Nivel Secundario</option>
-            <option value="reshit">✡ Reshit</option>
-          </select>
+    <!-- ── TAB: BORRADORES ── -->
+    <div class="tab-content" id="content-borradores">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white)">Mis borradores</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Artículos guardados que todavía no enviaste.</div>
         </div>
-        <div class="field">
-          <label class="lbl lbl-required">Tipo de contenido</label>
-          <select class="ai" id="art-tipo">
-            <option value="noticia">Noticia</option>
-            <option value="evento">Evento / Acto</option>
-            <option value="proyecto">Proyecto pedagógico</option>
-            <option value="galeria">Galería de fotos</option>
-            <option value="comunicado">Comunicado</option>
-            <option value="aviso">Aviso</option>
-          </select>
-        </div>
+        <button class="btn btn-gold btn-sm" onclick="setTab('nuevo');resetForm()">＋ Nuevo artículo</button>
       </div>
-
-      <div class="field">
-        <label class="lbl lbl-required">Título del artículo</label>
-        <input class="ai" id="art-titulo" placeholder="Ej: Semana de la Naturaleza en el Huerto Escolar">
-      </div>
-
-      <div class="field">
-        <label class="lbl">Bajada (frase de presentación)</label>
-        <textarea class="ai" id="art-bajada" rows="2" placeholder="Una frase que resume el artículo y atrae la atención de las familias…"></textarea>
-        <span class="ai-help">Aparece debajo del título, en itálica. Opcional pero recomendado.</span>
-      </div>
-
-      <div class="field">
-        <label class="lbl lbl-required">Contenido del artículo</label>
-        <span class="ai-help" style="margin-top:-2px;margin-bottom:2px">Armá la nota como quieras: agregá párrafos de texto, fotos y videos, y ordenalos con las flechas ↑↓.</span>
-        <div class="bloques-list" id="bloques-editor"></div>
-        <div class="bloque-add-row">
-          <button type="button" class="btn btn-ghost" onclick="agregarBloque('texto')">＋ Texto</button>
-          <button type="button" class="btn btn-ghost" onclick="agregarBloque('imagen')">＋ Foto</button>
-          <button type="button" class="btn btn-ghost" onclick="agregarBloque('video')">＋ Video</button>
-        </div>
-      </div>
-
-      <div class="grid2">
-        <div class="field">
-          <label class="lbl">Tu nombre completo</label>
-          <input class="ai" id="art-autor" placeholder="Ej: Maestra Daniela R.">
-        </div>
-        <div class="field">
-          <label class="lbl">Sala / Grado / Grupo</label>
-          <input class="ai" id="art-sala" placeholder="Ej: Sala Azul · 3.° Grado">
-        </div>
-      </div>
-
-      <div style="padding:12px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--rule);margin-bottom:14px">
-        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">📌 Sobre fotos y videos</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.65">
-          <strong style="color:var(--ink)">Fotos:</strong> subí la foto a Google Drive → clic derecho → "Compartir" → "Cualquier persona con el enlace" → copiá el link en el bloque de foto.<br>
-          <strong style="color:var(--ink)">Videos:</strong> pegá un link de YouTube, Vimeo, Google Drive, o un archivo .mp4. Se va a mostrar reproducible dentro del artículo.
-        </div>
-      </div>
-
-      <button class="btn btn-gold btn-full" onclick="enviarArticulo()" id="btn-enviar">
-        Enviar artículo para revisión →
-      </button>
-
-      <div class="exito-box" id="exito-box">
-        <h3>✅ ¡Artículo enviado!</h3>
-        <p>El equipo editorial lo revisará y te avisarán cuando esté publicado.<br>Podés ver el estado abajo en "Mis artículos".</p>
-        <button class="btn btn-ghost" onclick="resetForm()" style="margin-top:14px">Enviar otro</button>
-      </div>
+      <div id="lista-borradores"><div class="spin"></div></div>
     </div>
 
-    <!-- MIS ARTÍCULOS -->
-    <div class="section-title" style="margin-top:36px">Mis artículos enviados</div>
-    <div id="mis-arts"><div class="spin"></div></div>
+    <!-- ── TAB: ENVIADOS ── -->
+    <div class="tab-content" id="content-enviados">
+      <div style="margin-bottom:20px">
+        <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white)">Artículos enviados</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Estado de todo lo que enviaste para revisión.</div>
+      </div>
+      <div id="lista-enviados"><div class="spin"></div></div>
+    </div>
+
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, query,
-  where, orderBy, serverTimestamp
+  getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc,
+  getDocs, query, where, orderBy, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
-  authDomain: "revista-1ac1c.firebaseapp.com",
-  projectId: "revista-1ac1c",
-  storageBucket: "revista-1ac1c.firebasestorage.app",
-  messagingSenderId: "137545616566",
-  appId: "1:137545616566:web:f74736d93682e2727dea17"
+const FC = {
+  apiKey:"AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
+  authDomain:"revista-1ac1c.firebaseapp.com",
+  projectId:"revista-1ac1c",
+  storageBucket:"revista-1ac1c.firebasestorage.app",
+  messagingSenderId:"137545616566",
+  appId:"1:137545616566:web:f74736d93682e2727dea17"
 };
-const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
+const fbApp   = initializeApp(FC);
+const db      = getFirestore(fbApp);
+const auth    = getAuth(fbApp);
+const storage = getStorage(fbApp);
 
-let currentUser = null;
-
-// ═══ EDITOR DE BLOQUES (texto / foto / video) ═══════════════════
-let bloques = [];
-
-function nuevoBloqueId() { return 'b_' + Math.random().toString(36).slice(2,9); }
-
-function bloquesIniciales() {
-  return [{ id: nuevoBloqueId(), tipo: 'texto', texto: '' }];
-}
-
-window.agregarBloque = function(tipo) {
-  const b = { id: nuevoBloqueId(), tipo };
-  if (tipo === 'texto')  b.texto = '';
-  if (tipo === 'imagen') { b.url = ''; b.caption = ''; b.layout = 'full'; }
-  if (tipo === 'video')  { b.url = ''; b.caption = ''; }
-  bloques.push(b);
-  renderBloquesEditor();
+const NIVELES = {
+  institucional:{label:'Institucional',color:'#C9A84C'},
+  inicial:{label:'Nivel Inicial',color:'#C07030'},
+  primaria:{label:'Nivel Primario',color:'#2A7A50'},
+  secundaria:{label:'Nivel Secundario',color:'#2A50A0'},
+  reshit:{label:'Reshit',color:'#7030A0'},
 };
 
-window.eliminarBloque = function(id) {
-  bloques = bloques.filter(b => b.id !== id);
-  if (!bloques.length) bloques = bloquesIniciales();
-  renderBloquesEditor();
-};
+// ══ ESTADO ══════════════════════════════════════════════════
+let currentUser    = null;
+let bloques        = [];
+let borradorId     = null; // ID del borrador actual en Firestore
+let cambiosPend    = false;
+let autosaveTimer  = null;
+let previewTimer   = null;
+let ultimoGuardado = null;
 
-window.moverBloque = function(id, dir) {
-  const i = bloques.findIndex(b => b.id === id);
-  const j = i + dir;
-  if (i < 0 || j < 0 || j >= bloques.length) return;
-  [bloques[i], bloques[j]] = [bloques[j], bloques[i]];
-  renderBloquesEditor();
-};
-
-window.actualizarBloque = function(id, campo, valor) {
-  const b = bloques.find(b => b.id === id);
-  if (b) b[campo] = valor;
-};
-
-function escB(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-
-function htmlBloque(b, i, total) {
-  const ctrls = `
-    <div class="bloque-ctrls">
-      <button type="button" onclick="moverBloque('${b.id}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
-      <button type="button" onclick="moverBloque('${b.id}',1)" ${i===total-1?'disabled':''} title="Bajar">↓</button>
-      <button type="button" class="del" onclick="eliminarBloque('${b.id}')" title="Eliminar">✕</button>
-    </div>`;
-
-  if (b.tipo === 'texto') {
-    return `
-      <div class="bloque-item">
-        <div class="bloque-head"><span class="bloque-tag">📝 Texto</span>${ctrls}</div>
-        <textarea class="ai" rows="4" placeholder="Escribí un párrafo…" oninput="actualizarBloque('${b.id}','texto',this.value)">${escB(b.texto)}</textarea>
-      </div>`;
-  }
-  if (b.tipo === 'imagen') {
-    return `
-      <div class="bloque-item">
-        <div class="bloque-head"><span class="bloque-tag">🖼️ Foto</span>${ctrls}</div>
-        <input class="ai" placeholder="Link de Google Drive u otra imagen" value="${escB(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
-        <input class="ai" placeholder="Pie de foto (opcional)" value="${escB(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
-        <select class="ai" onchange="actualizarBloque('${b.id}','layout',this.value)">
-          <option value="full" ${(b.layout||'full')==='full'?'selected':''}>Ancho completo</option>
-          <option value="left" ${b.layout==='left'?'selected':''}>A la izquierda (texto al costado)</option>
-          <option value="right" ${b.layout==='right'?'selected':''}>A la derecha (texto al costado)</option>
-        </select>
-      </div>`;
-  }
-  if (b.tipo === 'video') {
-    return `
-      <div class="bloque-item">
-        <div class="bloque-head"><span class="bloque-tag">🎬 Video</span>${ctrls}</div>
-        <input class="ai" placeholder="Link de YouTube, Vimeo, Drive o archivo .mp4" value="${escB(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
-        <input class="ai" placeholder="Descripción del video (opcional)" value="${escB(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
-      </div>`;
-  }
-  return '';
-}
-
-function renderBloquesEditor() {
-  const cont = document.getElementById('bloques-editor');
-  if (!cont) return;
-  if (!bloques.length) {
-    cont.innerHTML = '<div class="bloques-empty">Todavía no agregaste contenido.<br>Usá los botones de abajo para sumar texto, fotos o videos.</div>';
-    return;
-  }
-  cont.innerHTML = bloques.map((b,i) => htmlBloque(b, i, bloques.length)).join('');
-}
-
+// ══ AUTH ════════════════════════════════════════════════════
 onAuthStateChanged(auth, user => {
   if (user) {
     currentUser = user;
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('app-section').style.display = 'block';
+    document.getElementById('login-section').style.display  = 'none';
+    document.getElementById('site-header').style.display    = 'flex';
+    document.getElementById('tabs-bar').style.display       = 'block';
+    document.getElementById('app-section').style.display    = 'block';
+    // Nombre amigable
     const nombre = user.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    document.getElementById('welcome-name').textContent = nombre;
+    document.getElementById('header-name').textContent = nombre;
     document.getElementById('art-autor').value = nombre;
-    bloques = bloquesIniciales();
-    renderBloquesEditor();
-    cargarMisArticulos();
+    // Inicializar editor
+    bloques = [{ id: bid(), tipo:'texto', html:'<p></p>' }];
+    renderBloques();
+    // Cargar datos
+    cargarBorradores();
+    cargarEnviados();
   } else {
     currentUser = null;
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('app-section').style.display = 'none';
+    ['site-header','tabs-bar','app-section'].forEach(id => document.getElementById(id).style.display='none');
+    document.getElementById('login-section').style.display = 'flex';
   }
 });
 
@@ -376,118 +537,666 @@ window.doLogin = async function() {
   const email = document.getElementById('login-email').value.trim();
   const pass  = document.getElementById('login-pass').value;
   const btn   = document.getElementById('login-btn');
-  const errEl = document.getElementById('login-err');
-  if (!email || !pass) { errEl.textContent='Completá email y contraseña'; errEl.style.display='block'; return; }
-  btn.textContent='Ingresando…'; btn.disabled=true; errEl.style.display='none';
+  const err   = document.getElementById('login-err');
+  if (!email || !pass) { err.textContent='Completá email y contraseña'; err.style.display='block'; return; }
+  btn.textContent = 'Ingresando…'; btn.disabled = true; err.style.display = 'none';
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch(e) {
-    const msgs={'auth/invalid-credential':'Email o contraseña incorrectos.','auth/too-many-requests':'Demasiados intentos. Esperá.'};
-    errEl.textContent=msgs[e.code]||'Error: '+e.message; errEl.style.display='block';
-    btn.textContent='Ingresar →'; btn.disabled=false;
+    const msgs = {'auth/invalid-credential':'Email o contraseña incorrectos.','auth/too-many-requests':'Demasiados intentos. Esperá.'};
+    err.textContent = msgs[e.code] || 'Error: '+e.message;
+    err.style.display = 'block';
+    btn.textContent = 'Ingresar →'; btn.disabled = false;
+  }
+};
+window.doLogout = async function() { await signOut(auth); };
+
+// ══ TABS ════════════════════════════════════════════════════
+window.setTab = function(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('content-'+tab).classList.add('active');
+};
+
+// ══ BLOQUES - IDs ═══════════════════════════════════════════
+function bid() { return 'b_'+Math.random().toString(36).slice(2,9); }
+
+// ══ TOOLBAR RICH TEXT ════════════════════════════════════════
+function htmlToolbar(bloqueId) {
+  return `
+  <div class="rte-toolbar">
+    <select onchange="rteBlock('${bloqueId}',this.value);this.value=''" title="Estilo">
+      <option value="">Estilo…</option>
+      <option value="p">Párrafo</option>
+      <option value="h2">Título grande</option>
+      <option value="h3">Título mediano</option>
+      <option value="blockquote">Cita destacada</option>
+    </select>
+    <select onchange="rteFuente('${bloqueId}',this.value);this.value=''" title="Fuente">
+      <option value="">Fuente…</option>
+      <option value="'EB Garamond',serif">Garamond</option>
+      <option value="'Playfair Display',serif">Playfair</option>
+      <option value="'Lato',sans-serif">Lato</option>
+    </select>
+    <select onchange="rteTam(this.value);this.value=''" title="Tamaño">
+      <option value="">Tamaño…</option>
+      <option value="11px">Pequeño</option>
+      <option value="14px">Normal</option>
+      <option value="18px">Grande</option>
+      <option value="22px">Muy grande</option>
+    </select>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('bold')"         title="Negrita"><b style="font-size:12px">B</b></button>
+    <button onclick="rteCmd('italic')"       title="Cursiva"><i style="font-size:12px">I</i></button>
+    <button onclick="rteCmd('underline')"    title="Subrayado"><u style="font-size:11px">S</u></button>
+    <button onclick="rteCmd('strikeThrough')" title="Tachado"><s style="font-size:11px">T</s></button>
+    <div class="rte-sep"></div>
+    <button class="color-btn" title="Color de texto">
+      <span style="font-size:11px;font-weight:900;pointer-events:none">A</span>
+      <input type="color" value="#C9A84C" onchange="rteCmd('foreColor',this.value)">
+    </button>
+    <button class="color-btn" title="Resaltado">
+      <span style="font-size:10px;font-weight:900;background:#fff3b0;color:#333;padding:1px 2px;border-radius:2px;pointer-events:none">A</span>
+      <input type="color" value="#fff3b0" onchange="rteCmd('hiliteColor',this.value)">
+    </button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('insertUnorderedList')" title="Lista">☰</button>
+    <button onclick="rteCmd('insertOrderedList')"   title="Lista numerada">1.</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('justifyLeft')"   title="Izquierda" style="font-size:11px">⇤</button>
+    <button onclick="rteCmd('justifyCenter')" title="Centrar"   style="font-size:11px">≡</button>
+    <button onclick="rteCmd('justifyRight')"  title="Derecha"   style="font-size:11px">⇥</button>
+    <button onclick="rteCmd('justifyFull')"   title="Justificar" style="font-size:11px">▤</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteLink('${bloqueId}')" title="Enlace">🔗</button>
+    <button onclick="rtePQ('${bloqueId}')" title="Cita destacada (seleccioná texto primero)" style="font-size:10px;width:auto;padding:0 6px;font-style:italic;color:var(--gold-pale)">« Cita »</button>
+    <button onclick="rteCmd('removeFormat')" title="Limpiar formato" style="font-size:9px;width:auto;padding:0 5px">✕fmt</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('undo')" title="Deshacer">↩</button>
+    <button onclick="rteCmd('redo')" title="Rehacer">↪</button>
+  </div>`;
+}
+
+// ── Comandos RTE ──
+window.rteCmd    = (cmd, val)  => document.execCommand(cmd, false, val||null);
+window.rteBlock  = (bid, tag)  => { if(!tag) return; document.getElementById('rte-'+bid)?.focus(); document.execCommand('formatBlock',false,tag); };
+window.rteFuente = (bid, font) => { if(!font) return; document.getElementById('rte-'+bid)?.focus(); document.execCommand('fontName',false,font); };
+window.rteTam    = size => {
+  if (!size) return;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+    const span = document.createElement('span');
+    span.style.fontSize = size;
+    try { sel.getRangeAt(0).surroundContents(span); } catch {}
+  }
+};
+window.rteLink = bid => {
+  const url = prompt('URL del enlace:','https://');
+  if (!url) return;
+  document.getElementById('rte-'+bid)?.focus();
+  document.execCommand('createLink',false,url);
+};
+window.rtePQ = bid => {
+  document.getElementById('rte-'+bid)?.focus();
+  document.execCommand('formatBlock',false,'blockquote');
+};
+
+// ── Pegado limpio ──
+function setupPaste(el) {
+  el.addEventListener('paste', e => {
+    e.preventDefault();
+    const html  = e.clipboardData.getData('text/html');
+    const texto = e.clipboardData.getData('text/plain');
+    if (html) {
+      const parser = new DOMParser();
+      const d2 = parser.parseFromString(html,'text/html');
+      d2.querySelectorAll('[style]').forEach(node => {
+        const s = node.getAttribute('style');
+        const keep = [];
+        if (/font-weight:\s*(bold|[6-9]\d\d)/.test(s)) keep.push('font-weight:bold');
+        if (/font-style:\s*italic/.test(s))            keep.push('font-style:italic');
+        if (/text-decoration:\s*underline/.test(s))    keep.push('text-decoration:underline');
+        keep.length ? node.setAttribute('style',keep.join(';')) : node.removeAttribute('style');
+      });
+      d2.querySelectorAll('[class]').forEach(n => n.removeAttribute('class'));
+      d2.querySelectorAll('span:not([style])').forEach(n => n.replaceWith(...n.childNodes));
+      const limpio = d2.body.innerHTML
+        .replace(/<!--[\s\S]*?-->/g,'')
+        .replace(/<o:p>.*?<\/o:p>/gi,'');
+      document.execCommand('insertHTML',false,limpio);
+    } else {
+      const ps = texto.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('');
+      document.execCommand('insertHTML',false,ps||texto);
+    }
+    marcarCambio();
+  });
+}
+
+// ══ BLOQUES CRUD ════════════════════════════════════════════
+function agregarBloque(tipo) {
+  const b = { id:bid(), tipo };
+  if (tipo==='texto')     b.html = '<p></p>';
+  if (tipo==='imagen')    { b.url=''; b.caption=''; b.layout='full'; }
+  if (tipo==='video')     { b.url=''; b.caption=''; }
+  if (tipo==='separador') b.estilo = 'doble';
+  bloques.push(b);
+  renderBloques();
+  if (tipo==='texto') setTimeout(()=>document.getElementById('rte-'+b.id)?.focus(),60);
+}
+window.agregarBloque = agregarBloque;
+
+window.eliminarBloque = id => {
+  bloques = bloques.filter(b=>b.id!==id);
+  if (!bloques.length) bloques = [{id:bid(),tipo:'texto',html:'<p></p>'}];
+  renderBloques(); marcarCambio();
+};
+window.moverBloque = (id, dir) => {
+  const i=bloques.findIndex(b=>b.id===id), j=i+dir;
+  if(i<0||j<0||j>=bloques.length) return;
+  [bloques[i],bloques[j]]=[bloques[j],bloques[i]];
+  renderBloques(); marcarCambio();
+};
+window.duplicarBloque = id => {
+  const i=bloques.findIndex(b=>b.id===id);
+  if(i<0) return;
+  bloques.splice(i+1,0,{...bloques[i],id:bid()});
+  renderBloques(); marcarCambio();
+};
+
+function sincronizarBloques() {
+  bloques.forEach(b => {
+    if(b.tipo==='texto') { const el=document.getElementById('rte-'+b.id); if(el) b.html=el.innerHTML; }
+    if(b.tipo==='imagen') {
+      const u=document.getElementById('img-url-'+b.id);
+      const c=document.getElementById('img-cap-'+b.id);
+      const l=document.getElementById('img-lay-'+b.id);
+      if(u) b.url=u.value.trim(); if(c) b.caption=c.value.trim(); if(l) b.layout=l.value;
+    }
+    if(b.tipo==='video') {
+      const u=document.getElementById('vid-url-'+b.id);
+      const c=document.getElementById('vid-cap-'+b.id);
+      if(u) b.url=u.value.trim(); if(c) b.caption=c.value.trim();
+    }
+  });
+}
+
+function htmlBloque(b, i, total) {
+  const ctrls = `
+    <div class="bloque-ctrls">
+      <button type="button" onclick="moverBloque('${b.id}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
+      <button type="button" onclick="moverBloque('${b.id}',1)"  ${i===total-1?'disabled':''} title="Bajar">↓</button>
+      <button type="button" onclick="duplicarBloque('${b.id}')" title="Duplicar">⎘</button>
+      <button type="button" class="del" onclick="eliminarBloque('${b.id}')" title="Eliminar">✕</button>
+    </div>`;
+
+  if (b.tipo==='texto') return `
+    <div class="bloque-item" id="bloque-${b.id}">
+      <div class="bloque-head"><span class="bloque-tag">📝 Texto</span>${ctrls}</div>
+      ${htmlToolbar(b.id)}
+      <div id="rte-${b.id}" class="rte-body" contenteditable="true"
+        data-placeholder="Escribí tu artículo acá…"
+        oninput="bloques.find(x=>x.id==='${b.id}').html=this.innerHTML;marcarCambio()"
+        onkeydown="if(event.key==='Tab'){event.preventDefault();document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;')}"
+      >${b.html||'<p></p>'}</div>
+    </div>`;
+
+  if (b.tipo==='imagen') {
+    const prev = b.url ? driveUrl(b.url) : '';
+    return `
+    <div class="bloque-item" id="bloque-${b.id}">
+      <div class="bloque-head"><span class="bloque-tag">🖼️ Imagen</span>${ctrls}</div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:9px;background:var(--bg)">
+        <!-- Subida directa -->
+        <div class="upload-zone" id="zone-${b.id}"
+          onclick="document.getElementById('file-${b.id}').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="event.preventDefault();this.classList.remove('drag');handleDrop(event,'${b.id}')">
+          <input type="file" id="file-${b.id}" accept="image/*" style="display:none" onchange="handleFile(this,'${b.id}')">
+          <div style="font-size:24px;margin-bottom:6px">⬆</div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted)">Hacé clic o arrastrá una foto aquí</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">JPG, PNG, WebP · Máx. 10 MB</div>
+          <div class="upload-progress" id="prog-${b.id}">
+            <div class="upload-progress-fill" id="prog-fill-${b.id}"></div>
+          </div>
+          <div id="upload-status-${b.id}" style="font-size:10px;color:var(--ok);margin-top:5px"></div>
+        </div>
+        <!-- O link -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="flex:1;height:1px;background:var(--rule)"></div>
+          <span style="font-size:10px;color:var(--muted)">o pegá un link de Google Drive</span>
+          <div style="flex:1;height:1px;background:var(--rule)"></div>
+        </div>
+        <input class="ai" id="img-url-${b.id}" value="${esc(b.url||'')}"
+          placeholder="https://drive.google.com/file/d/…/view"
+          oninput="bloques.find(x=>x.id==='${b.id}').url=this.value;marcarCambio()">
+        ${prev?`<img class="img-thumb" src="${prev}" onerror="this.style.display='none'" id="img-prev-${b.id}">`:
+               `<img class="img-thumb" id="img-prev-${b.id}" style="display:none">`}
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Pie de foto</label>
+          <input class="ai" id="img-cap-${b.id}" value="${esc(b.caption||'')}" placeholder="Descripción de la imagen…"
+            oninput="bloques.find(x=>x.id==='${b.id}').caption=this.value;marcarCambio()">
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Posición</label>
+          <select class="ai" id="img-lay-${b.id}" onchange="bloques.find(x=>x.id==='${b.id}').layout=this.value;marcarCambio()">
+            <option value="full"  ${(b.layout||'full')==='full' ?'selected':''}>Ancho completo</option>
+            <option value="left"  ${b.layout==='left' ?'selected':''}>Izquierda (texto a la derecha)</option>
+            <option value="right" ${b.layout==='right'?'selected':''}>Derecha (texto a la izquierda)</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if (b.tipo==='video') return `
+    <div class="bloque-item" id="bloque-${b.id}">
+      <div class="bloque-head"><span class="bloque-tag">▶ Video</span>${ctrls}</div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)">
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Link del video</label>
+          <input class="ai" id="vid-url-${b.id}" value="${esc(b.url||'')}"
+            placeholder="YouTube, Vimeo, Google Drive o .mp4"
+            oninput="bloques.find(x=>x.id==='${b.id}').url=this.value;marcarCambio()">
+          <span class="ai-help">YouTube y Google Drive se incrustan automáticamente en la revista.</span>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label class="lbl">Descripción</label>
+          <input class="ai" id="vid-cap-${b.id}" value="${esc(b.caption||'')}" placeholder="Ej: Acto de fin de año"
+            oninput="bloques.find(x=>x.id==='${b.id}').caption=this.value;marcarCambio()">
+        </div>
+      </div>
+    </div>`;
+
+  if (b.tipo==='separador') return `
+    <div class="bloque-item" id="bloque-${b.id}">
+      <div class="bloque-head"><span class="bloque-tag">— Separador</span>${ctrls}</div>
+      <div style="padding:10px 12px;background:var(--bg)">
+        <select class="ai" onchange="bloques.find(x=>x.id==='${b.id}').estilo=this.value;marcarCambio()">
+          <option value="simple"     ${(b.estilo||'doble')==='simple'    ?'selected':''}>Línea simple</option>
+          <option value="doble"      ${b.estilo==='doble'                ?'selected':''}>Línea doble</option>
+          <option value="ornamental" ${b.estilo==='ornamental'           ?'selected':''}>Ornamental (✦ ✦ ✦)</option>
+        </select>
+      </div>
+    </div>`;
+  return '';
+}
+
+function renderBloques() {
+  const cont = document.getElementById('bloques-editor');
+  if (!cont) return;
+  if (!bloques.length) {
+    cont.innerHTML = '<div class="bloques-empty">Usá los botones de abajo para agregar texto, fotos o videos.</div>';
+    return;
+  }
+  cont.innerHTML = bloques.map((b,i)=>htmlBloque(b,i,bloques.length)).join('');
+  cont.querySelectorAll('.rte-body').forEach(el => setupPaste(el));
+  actualizarPreview();
+  actualizarContadores();
+}
+
+// ══ UPLOAD DE IMÁGENES ═══════════════════════════════════════
+function driveUrl(url) {
+  if (!url) return '';
+  const m = url.match(/\/d\/([^/?#]+)/);
+  return m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : url;
+}
+
+window.handleFile = (input, bloqueId) => {
+  const file = input.files[0];
+  if (file) subirImagen(file, bloqueId);
+};
+window.handleDrop = (e, bloqueId) => {
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) subirImagen(file, bloqueId);
+};
+
+async function subirImagen(file, bloqueId) {
+  if (file.size > 10 * 1024 * 1024) { toast('La imagen supera los 10 MB','err'); return; }
+  const prog   = document.getElementById('prog-'+bloqueId);
+  const fill   = document.getElementById('prog-fill-'+bloqueId);
+  const status = document.getElementById('upload-status-'+bloqueId);
+  const urlInp = document.getElementById('img-url-'+bloqueId);
+  const prevEl = document.getElementById('img-prev-'+bloqueId);
+
+  if (prog) prog.style.display = 'block';
+  if (status) status.textContent = 'Subiendo…';
+
+  const ext  = file.name.split('.').pop().toLowerCase();
+  const path = `revista/imagenes/${Date.now()}_${Math.random().toString(36).slice(2,6)}.${ext}`;
+  const ref  = storageRef(storage, path);
+  const task = uploadBytesResumable(ref, file);
+
+  task.on('state_changed',
+    snap => {
+      const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+      if (fill)   fill.style.width   = pct+'%';
+      if (status) status.textContent = pct+'%';
+    },
+    err => {
+      if (status) status.textContent = '❌ Error al subir';
+      toast('Error: '+err.message,'err');
+    },
+    async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      if (urlInp) urlInp.value = url;
+      const b = bloques.find(x=>x.id===bloqueId);
+      if (b) b.url = url;
+      if (prog)   prog.style.display  = 'none';
+      if (status) status.textContent  = '✓ Subida exitosa';
+      if (prevEl) { prevEl.src = url; prevEl.style.display = 'block'; }
+      toast('Foto subida ✓');
+      marcarCambio();
+    }
+  );
+}
+
+// ══ PREVIEW EN TIEMPO REAL ═══════════════════════════════════
+function actualizarPreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    const prev   = document.getElementById('preview-live');
+    if (!prev) return;
+    const nivel  = document.getElementById('art-nivel')?.value || 'institucional';
+    const titulo = document.getElementById('art-titulo')?.value?.trim() || '';
+    const bajada = document.getElementById('art-bajada')?.value?.trim() || '';
+    const niv    = NIVELES[nivel] || {label:nivel,color:'#C9A84C'};
+
+    const cuerpoHTML = bloques.map(b => {
+      if (b.tipo==='texto') return `<div class="pc">${b.html||''}</div>`;
+      if (b.tipo==='imagen' && b.url) {
+        return `<img src="${driveUrl(b.url)}" style="max-width:100%;border-radius:4px;margin:7px 0" onerror="this.style.display='none'">
+          ${b.caption?`<div style="font-size:9px;color:#8888AA;font-style:italic;margin-bottom:6px">${b.caption}</div>`:''}`;
+      }
+      if (b.tipo==='separador') {
+        if (b.estilo==='ornamental') return `<div style="text-align:center;color:#C9A84C;font-size:13px;margin:10px 0;letter-spacing:8px">✦ ✦ ✦</div>`;
+        if (b.estilo==='doble')     return `<div style="border-top:2px solid #1A1A2E;height:4px;border-bottom:1px solid #1A1A2E;margin:12px 0"></div>`;
+        return `<hr style="border:none;border-top:1px solid #D4C9A8;margin:12px 0">`;
+      }
+      return '';
+    }).join('');
+
+    const words = contarPalabras();
+    prev.innerHTML = `
+      <div class="pk" style="color:${niv.color}">${niv.label}</div>
+      <div class="pt">${esc(titulo)||'<span style="color:#aaa">Título…</span>'}</div>
+      ${bajada?`<div class="pb">${esc(bajada)}</div>`:''}
+      ${cuerpoHTML||'<div style="color:#aaa;font-style:italic;font-size:12px;padding:10px 0">El contenido aparecerá acá…</div>'}
+      <div class="pw">${words} palabras · ~${Math.max(1,Math.round(words/200))} min de lectura</div>
+    `;
+  }, 280);
+}
+
+function contarPalabras() {
+  return bloques.filter(b=>b.tipo==='texto').reduce((t,b)=>{
+    const txt=(b.html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+    return t+(txt?txt.split(' ').length:0);
+  },0);
+}
+
+function actualizarContadores() {
+  const w = contarPalabras();
+  const wc = document.getElementById('word-count');
+  const rt = document.getElementById('read-time');
+  if (wc) wc.textContent = w.toLocaleString()+' palabras';
+  if (rt) rt.textContent = Math.max(1,Math.round(w/200))+' min lectura';
+}
+window.actualizarPreview = actualizarPreview;
+
+// ══ AUTOGUARDADO ═════════════════════════════════════════════
+function marcarCambio() {
+  cambiosPend = true;
+  setDot('pending');
+  actualizarContadores();
+  actualizarPreview();
+}
+window.marcarCambio = marcarCambio;
+
+function setDot(estado) {
+  const dot = document.getElementById('autosave-dot');
+  const lbl = document.getElementById('autosave-lbl');
+  if (!dot || !lbl) return;
+  dot.className = 'autosave-dot'+(estado==='saving'?' saving':estado==='saved'?' saved':'');
+  if (estado==='saving') lbl.textContent = 'Guardando…';
+  else if (estado==='saved') lbl.textContent = 'Guardado '+(ultimoGuardado?ultimoGuardado.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'');
+  else lbl.textContent = 'Con cambios sin guardar';
+}
+
+// Autoguardado cada 30 segundos
+setInterval(async () => {
+  if (!cambiosPend || !currentUser) return;
+  await guardarBorrador(true);
+}, 30000);
+
+// ══ GUARDAR BORRADOR ══════════════════════════════════════════
+window.guardarBorrador = async function(silencioso = false) {
+  if (!currentUser) return;
+  sincronizarBloques();
+  setDot('saving');
+  const data = recopilarDatos('borrador');
+  try {
+    if (borradorId) {
+      await updateDoc(doc(db,'articulos',borradorId), {...data, actualizadoEn:serverTimestamp()});
+    } else {
+      data.creadoEn = serverTimestamp();
+      const ref = await addDoc(collection(db,'articulos'), data);
+      borradorId = ref.id;
+    }
+    cambiosPend    = false;
+    ultimoGuardado = new Date();
+    setDot('saved');
+    if (!silencioso) { toast('Borrador guardado ✓'); cargarBorradores(); }
+  } catch(e) {
+    setDot('error');
+    if (!silencioso) toast('Error al guardar: '+e.message, 'err');
   }
 };
 
-window.doLogout = async function() { await signOut(auth); };
-
+// ══ ENVIAR ARTÍCULO ══════════════════════════════════════════
 window.enviarArticulo = async function() {
-  const titulo = document.getElementById('art-titulo').value.trim();
-
-  // Limpiar bloques vacíos y armar campos derivados (compatibilidad)
-  const bloquesValidos = bloques.filter(b =>
-    (b.tipo === 'texto'  && b.texto && b.texto.trim()) ||
-    (b.tipo !== 'texto'  && b.url   && b.url.trim())
-  );
-  const cuerpo = bloquesValidos.filter(b => b.tipo==='texto').map(b => b.texto.trim()).join('\n\n');
-  const primeraImagen = bloquesValidos.find(b => b.tipo === 'imagen');
-
-  if (!titulo) { toast('El título es obligatorio', 'err'); return; }
-  if (!bloquesValidos.length) { toast('Agregá al menos un bloque de contenido', 'err'); return; }
+  sincronizarBloques();
+  const titulo  = document.getElementById('art-titulo')?.value?.trim();
+  const hayContenido = bloques.some(b => b.tipo==='texto' && (b.html||'').replace(/<[^>]*>/g,'').trim());
+  if (!titulo)       { toast('El título es obligatorio','err'); return; }
+  if (!hayContenido) { toast('Escribí al menos un párrafo de contenido','err'); return; }
 
   const btn = document.getElementById('btn-enviar');
   btn.disabled = true; btn.textContent = 'Enviando…';
-
   try {
-    await addDoc(collection(db,'articulos'), {
-      nivel:          document.getElementById('art-nivel').value,
-      tipo:           document.getElementById('art-tipo').value,
-      titulo,
-      bajada:         document.getElementById('art-bajada').value.trim(),
-      cuerpo,
-      bloques:        bloquesValidos,
-      autor:          document.getElementById('art-autor').value.trim(),
-      sala:           document.getElementById('art-sala').value.trim(),
-      imagenUrl:      primeraImagen ? primeraImagen.url.trim() : '',
-      docenteEmail:   currentUser.email,
-      docenteNombre:  document.getElementById('art-autor').value.trim() || currentUser.email,
-      estado:         'revision',
-      edicionId:      '',
-      orden:          99,
-      fecha:          new Date().toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}),
-      creadoEn:       serverTimestamp(),
-      actualizadoEn:  serverTimestamp(),
-    });
+    const data = recopilarDatos('revision');
+    if (borradorId) {
+      await updateDoc(doc(db,'articulos',borradorId), {...data, actualizadoEn:serverTimestamp()});
+    } else {
+      data.creadoEn = serverTimestamp();
+      await addDoc(collection(db,'articulos'), data);
+    }
+    borradorId  = null;
+    cambiosPend = false;
     document.getElementById('exito-box').style.display = 'block';
-    cargarMisArticulos();
+    document.getElementById('status-bar').style.display = 'none';
+    cargarBorradores();
+    cargarEnviados();
   } catch(e) {
-    toast('Error al enviar: ' + e.message, 'err');
+    toast('Error al enviar: '+e.message,'err');
   } finally {
-    btn.disabled=false; btn.textContent='Enviar artículo para revisión →';
+    btn.disabled = false; btn.textContent = 'Enviar para revisión →';
   }
 };
 
+function recopilarDatos(estado) {
+  const bloquesValidos = bloques.filter(b => {
+    if (b.tipo==='texto')     return (b.html||'').replace(/<[^>]*>/g,'').trim();
+    if (b.tipo==='separador') return true;
+    return b.url && b.url.trim();
+  });
+  const cuerpo = bloquesValidos.filter(b=>b.tipo==='texto')
+    .map(b=>(b.html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim()).join('\n\n');
+  const primeraImg = bloquesValidos.find(b=>b.tipo==='imagen');
+  return {
+    nivel:         document.getElementById('art-nivel')?.value  || '',
+    tipo:          document.getElementById('art-tipo')?.value   || '',
+    titulo:        document.getElementById('art-titulo')?.value?.trim()  || '',
+    bajada:        document.getElementById('art-bajada')?.value?.trim()  || '',
+    autor:         document.getElementById('art-autor')?.value?.trim()   || '',
+    sala:          document.getElementById('art-sala')?.value?.trim()    || '',
+    fecha:         new Date().toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}),
+    cuerpo, bloques: bloquesValidos,
+    imagenUrl:     primeraImg?.url?.trim() || '',
+    docenteEmail:  currentUser?.email || '',
+    docenteNombre: document.getElementById('art-autor')?.value?.trim() || currentUser?.email || '',
+    estado, edicionId:'', orden:99,
+  };
+}
+
+// ══ RESET ════════════════════════════════════════════════════
 window.resetForm = function() {
-  ['art-titulo','art-bajada','art-sala'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('art-nivel').value='institucional';
-  document.getElementById('art-tipo').value='noticia';
-  document.getElementById('exito-box').style.display='none';
-  bloques = bloquesIniciales();
-  renderBloquesEditor();
+  borradorId = null; cambiosPend = false;
+  ['art-titulo','art-bajada','art-autor','art-sala'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('art-nivel').value = 'institucional';
+  document.getElementById('art-tipo').value  = 'noticia';
+  // Restaurar nombre
+  if (currentUser) {
+    const nombre = currentUser.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    document.getElementById('art-autor').value = nombre;
+  }
+  bloques = [{id:bid(),tipo:'texto',html:'<p></p>'}];
+  renderBloques();
+  document.getElementById('exito-box').style.display = 'none';
+  document.getElementById('status-bar').style.display = '';
+  setDot('');
+  document.getElementById('autosave-lbl').textContent = 'Sin guardar';
+  const prev = document.getElementById('preview-live');
+  if (prev) prev.innerHTML = '<div style="color:#aaa;font-style:italic;font-size:12px;text-align:center;padding:20px 10px">Empezá a escribir para ver la previsualización…</div>';
 };
 
-async function cargarMisArticulos() {
-  const cont = document.getElementById('mis-arts');
-  cont.innerHTML = '<div class="spin"></div>';
+// ══ CARGAR BORRADORES ════════════════════════════════════════
+async function cargarBorradores() {
+  const cont = document.getElementById('lista-borradores');
+  if (!cont || !currentUser) return;
   try {
-    // Sin orderBy en la query (evita pedir índice compuesto); ordenamos en JS
-    const sn = await getDocs(
-      query(collection(db,'articulos'), where('docenteEmail','==',currentUser.email))
-    );
-    const arts = sn.docs.map(d => ({id:d.id,...d.data()}))
-      .sort((a,b) => (b.creadoEn?.toMillis?.()||0) - (a.creadoEn?.toMillis?.()||0));
-    if (!arts.length) {
-      cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No enviaste artículos aún.</div>';
+    const sn = await getDocs(query(
+      collection(db,'articulos'),
+      where('docenteEmail','==',currentUser.email),
+      where('estado','==','borrador'),
+      orderBy('actualizadoEn','desc')
+    ));
+    const bors = sn.docs.map(d=>({id:d.id,...d.data()}));
+    // Actualizar notif badge
+    const nb = document.getElementById('notif-borradores');
+    if (nb) { nb.textContent=bors.length; nb.style.display=bors.length?'inline-flex':'none'; }
+
+    if (!bors.length) {
+      cont.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic">No tenés borradores guardados.</div>';
       return;
     }
-    const estadoLabel = { publicado:'✅ Publicado', revision:'⏳ En revisión', borrador:'📝 Borrador', rechazado:'❌ Rechazado' };
-    const bdgClass    = { publicado:'bdg-pub', revision:'bdg-rev', borrador:'bdg-bor', rechazado:'bdg-rej' };
-    cont.innerHTML = arts.map(a => `
-      <div class="art-item">
-        <div class="art-item-titulo">${a.titulo||'Sin título'}</div>
-        <div class="art-item-meta" style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
-          <span class="bdg ${bdgClass[a.estado]||'bdg-bor'}">${estadoLabel[a.estado]||a.estado}</span>
-          <span>${a.tipo||''}</span>
-          ${a.sala?`<span>· ${a.sala}</span>`:''}
-          ${a.creadoEn?`<span style="color:var(--muted)">Enviado: ${formatFecha(a.creadoEn)}</span>`:''}
+    cont.innerHTML = bors.map(b=>`
+      <div class="borrador-card" onclick="cargarBorrador('${b.id}')">
+        <div class="borrador-titulo">${b.titulo||'<em style="color:var(--muted)">Sin título</em>'}</div>
+        <div class="borrador-meta">
+          ${b.nivel?NIVELES[b.nivel]?.label||b.nivel:''} · ${b.tipo||''}
+          ${b.actualizadoEn?'· Editado '+formatFecha(b.actualizadoEn):''}
+          <span style="margin-left:auto;color:var(--warn);font-weight:700">Clic para editar →</span>
         </div>
-        ${a.estado==='rechazado'?`<div style="margin-top:8px;font-size:11px;color:var(--err);background:var(--err)11;border-radius:4px;padding:6px 10px">El administrador revisó este artículo y no fue publicado. Podés modificarlo y volver a enviar.</div>`:''}
       </div>
     `).join('');
   } catch(e) {
-    cont.innerHTML = `<div style="color:var(--err);font-size:12px;padding:16px">Error: ${e.message}</div>`;
+    cont.innerHTML = `<div style="color:var(--err);padding:20px;font-size:12px">Error: ${e.message}</div>`;
   }
 }
 
+window.cargarBorrador = async function(artId) {
+  // Cargar borrador en el editor
+  const sn = await (await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js")).getDoc(doc(db,'articulos',artId));
+  if (!sn.exists()) return;
+  const art = sn.data();
+  borradorId = artId;
+  // Llenar campos
+  const set = (id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('art-titulo', art.titulo);
+  set('art-bajada', art.bajada);
+  set('art-autor',  art.autor);
+  set('art-sala',   art.sala);
+  if(art.nivel) document.getElementById('art-nivel').value=art.nivel;
+  if(art.tipo)  document.getElementById('art-tipo').value=art.tipo;
+  // Cargar bloques
+  if (Array.isArray(art.bloques) && art.bloques.length) {
+    bloques = art.bloques.map(b=>({...b,id:b.id||bid()}));
+  } else if (art.cuerpo) {
+    bloques = [{id:bid(),tipo:'texto',html:art.cuerpo.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('')}];
+  } else {
+    bloques = [{id:bid(),tipo:'texto',html:'<p></p>'}];
+  }
+  renderBloques();
+  setDot('saved'); ultimoGuardado=new Date(); cambiosPend=false;
+  setTab('nuevo');
+  toast('Borrador cargado ✓');
+};
+
+// ══ CARGAR ENVIADOS ══════════════════════════════════════════
+async function cargarEnviados() {
+  const cont = document.getElementById('lista-enviados');
+  if (!cont || !currentUser) return;
+  try {
+    const sn = await getDocs(query(
+      collection(db,'articulos'),
+      where('docenteEmail','==',currentUser.email),
+      orderBy('creadoEn','desc')
+    ));
+    const arts = sn.docs.map(d=>({id:d.id,...d.data()})).filter(a=>a.estado!=='borrador');
+    if (!arts.length) {
+      cont.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;font-style:italic">Todavía no enviaste artículos.</div>';
+      return;
+    }
+    const ELBL = {publicado:'✅ Publicado',revision:'⏳ En revisión',rechazado:'❌ Rechazado'};
+    const ECLS = {publicado:'bdg-pub',revision:'bdg-rev',rechazado:'bdg-rej'};
+    cont.innerHTML = arts.map(a=>`
+      <div class="art-card">
+        <div class="art-card-titulo">${a.titulo||'Sin título'}</div>
+        <div class="art-card-meta">
+          <span class="bdg ${ECLS[a.estado]||'bdg-bor'}">${ELBL[a.estado]||a.estado}</span>
+          <span>${a.tipo||''}</span>
+          ${a.sala?`<span>· ${a.sala}</span>`:''}
+          ${a.creadoEn?`<span>Enviado: ${formatFecha(a.creadoEn)}</span>`:''}
+        </div>
+        ${a.estado==='rechazado'?`
+          <div style="margin-top:10px;font-size:11.5px;color:var(--err);background:var(--err)11;border-radius:6px;padding:8px 11px;line-height:1.5">
+            ❌ El equipo editorial revisó este artículo y no fue publicado en esta edición.<br>
+            <button class="btn btn-ghost btn-sm" onclick="reenviarRechazado('${a.id}')" style="margin-top:8px">Editar y reenviar</button>
+          </div>`:''}
+        ${a.estado==='publicado'?`<div style="margin-top:8px;font-size:11px;color:var(--ok)">🎉 ¡Tu artículo ya está en la revista!</div>`:''}
+      </div>
+    `).join('');
+  } catch(e) {
+    cont.innerHTML=`<div style="color:var(--err);padding:20px;font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+window.reenviarRechazado = async function(artId) {
+  await cargarBorrador(artId);
+  // Cambiar estado a borrador para poder reenviar
+  try {
+    await updateDoc(doc(db,'articulos',artId),{estado:'borrador',actualizadoEn:serverTimestamp()});
+    toast('Artículo listo para editar y reenviar');
+  } catch(e) {}
+};
+
+// ══ HELPERS ══════════════════════════════════════════════════
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
 function formatFecha(ts) {
-  try { const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'}); } catch { return ''; }
+  try{const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});}catch{return '';}
 }
 
 let toastTimer;
-window.toast = function(msg,type) {
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.style.background=type==='err'?'#C84C4C':'#3AB07A';
-  el.style.color='#fff'; el.style.display='block';
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.display='none',3200);
+window.toast = function(msg, type='ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.background = type==='err'?'#C84C4C':type==='warn'?'#C89A4C':'#3AB07A';
+  el.style.color = '#fff';
+  el.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.style.display='none',3200);
 };
 </script>
 </body>
