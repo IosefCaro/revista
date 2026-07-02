@@ -97,22 +97,181 @@ textarea.ai{resize:vertical;line-height:1.6}
   padding:20px 16px;text-align:center;color:var(--muted);font-size:12.5px;
   border:1px dashed var(--rule);border-radius:8px;line-height:1.6;
 }
-.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;padding:12px}
-.bloque-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.bloque-tag{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale)}
-.bloque-ctrls{display:flex;gap:5px}
+.bloque-item{background:var(--bg);border:1px solid var(--rule);border-radius:8px;overflow:hidden;transition:border-color .15s}
+.bloque-item:focus-within{border-color:var(--gold)55}
+.bloque-head{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--card);border-bottom:1px solid var(--rule)}
+.bloque-tag{font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--gold-pale);display:flex;align-items:center;gap:5px}
+.bloque-ctrls{display:flex;gap:4px}
 .bloque-ctrls button{
-  width:24px;height:24px;border-radius:5px;border:1px solid var(--rule);background:var(--navy);
-  color:var(--ink);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;
+  width:24px;height:24px;border-radius:4px;border:1px solid var(--rule);background:var(--navy);
+  color:var(--ink);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;
   transition:all .15s;padding:0;
 }
 .bloque-ctrls button:hover:not(:disabled){border-color:var(--gold)88;color:var(--gold)}
 .bloque-ctrls button:disabled{opacity:.3;cursor:not-allowed}
 .bloque-ctrls button.del:hover:not(:disabled){border-color:var(--err);color:var(--err)}
-.bloque-item .ai{margin-bottom:0}
-.bloque-item .ai + .ai,.bloque-item select.ai{margin-top:6px}
 .bloque-add-row{display:flex;gap:8px;flex-wrap:wrap}
 .bloque-add-row .btn{font-size:10px;padding:8px 14px}
+
+/* RICH TEXT EDITOR */
+.rte-wrap{display:flex;flex-direction:column;border:none}
+.rte-toolbar{
+  display:flex;align-items:center;gap:2px;flex-wrap:wrap;
+  padding:7px 10px;background:var(--card);border-bottom:1px solid var(--rule);
+  position:sticky;top:0;z-index:5;
+}
+.rte-toolbar button{
+  width:28px;height:28px;border-radius:4px;border:1px solid transparent;
+  background:none;color:var(--muted);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .12s;padding:0;flex-shrink:0;
+}
+.rte-toolbar button:hover{background:var(--navy);color:var(--white);border-color:var(--rule)}
+.rte-toolbar button.active{background:var(--gold)22;color:var(--gold);border-color:var(--gold)55}
+.rte-toolbar .rte-sep{width:1px;height:20px;background:var(--rule);margin:0 4px;flex-shrink:0}
+.rte-toolbar select{
+  background:var(--navy);border:1px solid var(--rule);color:var(--muted);
+  border-radius:4px;padding:3px 7px;font-size:11px;cursor:pointer;
+  height:28px;outline:none;transition:border-color .15s;
+}
+.rte-toolbar select:hover{border-color:var(--gold)55;color:var(--white)}
+.rte-toolbar .rte-color-btn{position:relative}
+.rte-toolbar .rte-color-btn input[type=color]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:none;
+}
+.rte-body{
+  min-height:140px;padding:14px 16px;outline:none;
+  font-family:'EB Garamond',serif;font-size:15px;line-height:1.78;
+  color:var(--ink);background:#FAF7F1;
+  /* Estilos de contenido editorial */
+}
+.rte-body:empty::before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.rte-body p{margin-bottom:6px}
+.rte-body h2{font-family:'Playfair Display',serif;font-size:20px;font-weight:900;color:#1A1A2E;margin:16px 0 6px;line-height:1.15}
+.rte-body h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:#1A1A2E;margin:12px 0 5px}
+.rte-body blockquote{border-left:3px solid #C9A84C;padding-left:12px;margin:12px 0;font-style:italic;color:#38385A}
+.rte-body ul{padding-left:20px;margin:6px 0}
+.rte-body ol{padding-left:20px;margin:6px 0}
+.rte-body li{margin-bottom:3px}
+.rte-body a{color:#C9A84C;text-decoration:underline}
+.rte-body .rte-highlight{background:#fff3b0}
+
+/* IMG bloque */
+.img-preview-wrap{padding:10px 12px;background:var(--bg)}
+.img-preview-thumb{max-width:100%;max-height:140px;object-fit:cover;border-radius:5px;margin-top:8px;display:block}
+
+/* ── NUEVAS FUNCIONALIDADES ── */
+
+/* Barra de estado del editor */
+.editor-statusbar{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  padding:5px 10px;background:var(--dim);border-top:1px solid var(--rule);
+  font-family:'Lato',sans-serif;font-size:10px;color:var(--muted);gap:8px;
+}
+.editor-statusbar .status-item{display:flex;align-items:center;gap:4px}
+.autosave-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--muted);
+  flex-shrink:0;transition:background .3s;
+}
+.autosave-dot.saving{background:var(--warn);animation:pulse .6s ease-in-out infinite}
+.autosave-dot.saved{background:var(--ok)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Panel de plantillas */
+.plantillas-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:12px;margin-bottom:16px;
+}
+.plantilla-card{
+  background:var(--bg);border:2px solid var(--rule);border-radius:10px;
+  padding:16px 14px;cursor:pointer;transition:all .15s;text-align:left;
+  display:flex;flex-direction:column;gap:6px;
+}
+.plantilla-card:hover{border-color:var(--gold);background:var(--gold)08}
+.plantilla-card.selected{border-color:var(--gold);background:var(--gold)15}
+.plantilla-icono{font-size:28px}
+.plantilla-nombre{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;color:var(--white)}
+.plantilla-desc{font-size:11px;color:var(--muted);line-height:1.5}
+
+/* Upload de imagen */
+.upload-zone{
+  border:2px dashed var(--rule);border-radius:8px;padding:20px;
+  text-align:center;cursor:pointer;transition:all .2s;
+  background:var(--bg);
+}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:var(--gold)08}
+.upload-zone input[type=file]{display:none}
+.upload-progress{
+  height:4px;background:var(--rule);border-radius:2px;overflow:hidden;
+  margin-top:8px;display:none;
+}
+.upload-progress-fill{height:100%;background:var(--gold);transition:width .2s;width:0}
+
+/* Historial de versiones */
+.version-item{
+  background:var(--bg);border:1px solid var(--rule);border-radius:7px;
+  padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px;
+}
+.version-badge{
+  font-size:9px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;
+  padding:2px 8px;border-radius:20px;flex-shrink:0;
+}
+.version-actual{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
+.version-ant{background:var(--rule)33;color:var(--muted);border:1px solid var(--rule)}
+
+/* Pull quote button highlight */
+.rte-toolbar button.pq-btn{
+  width:auto;padding:0 7px;font-size:10px;font-style:italic;
+  border-color:var(--gold)44;color:var(--gold-pale);
+}
+.rte-toolbar button.pq-btn:hover{background:var(--gold)22;border-color:var(--gold)}
+
+/* Preview lateral en modal */
+.editor-layout{display:grid;grid-template-columns:1fr 280px;gap:0;height:100%}
+.editor-col{overflow-y:auto;height:100%}
+.preview-col{
+  border-left:1px solid var(--rule);display:flex;flex-direction:column;
+  background:var(--dim);overflow:hidden;
+}
+.preview-col-header{
+  padding:10px 14px;border-bottom:1px solid var(--rule);
+  font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.preview-iframe-wrap{
+  flex:1;overflow:hidden;position:relative;
+  background:#FAF7F1;
+}
+.preview-page{
+  width:100%;height:100%;overflow-y:auto;padding:18px 16px;
+  font-family:'EB Garamond',serif;font-size:13px;line-height:1.75;color:#1A1A2E;
+  background:#FAF7F1;
+}
+.preview-page .prev-kicker{
+  font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:7px;
+}
+.preview-page .prev-titulo{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:18px;
+  line-height:1.1;margin-bottom:7px;color:#1A1A2E;
+}
+.preview-page .prev-bajada{
+  font-family:'EB Garamond',serif;font-style:italic;font-size:13px;
+  color:#38385A;border-bottom:1px solid #D4C9A8;padding-bottom:10px;margin-bottom:12px;
+}
+.preview-page .prev-body{font-family:'EB Garamond',serif;font-size:13px;line-height:1.8;color:#1A1A2E}
+.preview-page .prev-body::first-letter{
+  font-family:'Playfair Display',serif;font-size:3.2em;font-weight:900;
+  float:left;line-height:.76;margin-right:5px;margin-top:3px;color:#C9A84C;
+}
+.preview-page blockquote{
+  border-left:2.5px solid #C9A84C;padding-left:10px;
+  margin:10px 0;font-style:italic;color:#38385A;font-size:12px;
+}
+.preview-page h2{font-family:'Playfair Display',serif;font-size:17px;font-weight:900;margin:12px 0 5px;color:#1A1A2E}
+.preview-page h3{font-family:'Playfair Display',serif;font-size:14px;font-weight:700;margin:10px 0 4px;color:#1A1A2E}
+.preview-page img{max-width:100%;border-radius:4px;margin:8px 0}
+.prev-word-count{font-size:9.5px;color:var(--muted);padding:6px 14px;border-top:1px solid var(--rule);flex-shrink:0;text-align:center}
 
 /* BOTONES */
 .btn{
@@ -298,6 +457,37 @@ textarea.ai{resize:vertical;line-height:1.6}
 <!-- TOAST -->
 <div class="toast" id="toast" style="display:none"></div>
 
+<!-- MODAL PLANTILLAS -->
+<div class="ov" id="modal-plantillas">
+  <div class="mbox" style="max-width:700px">
+    <div class="mhead">
+      <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)">📄 Elegí una plantilla</span>
+      <button class="mclose" onclick="cerrarModal('modal-plantillas')">×</button>
+    </div>
+    <div style="padding:20px">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">La plantilla pre-carga los bloques típicos de ese tipo de artículo. Podés modificar todo después.</div>
+      <div class="plantillas-grid" id="plantillas-grid"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)">
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-plantillas')">Cancelar</button>
+        <button class="btn btn-gold" onclick="aplicarPlantilla()">Usar plantilla →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div class="ov" id="modal-versiones">
+  <div class="mbox" style="max-width:600px">
+    <div class="mhead">
+      <span style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--white)">🕐 Historial de versiones</span>
+      <button class="mclose" onclick="cerrarModal('modal-versiones')">×</button>
+    </div>
+    <div style="padding:20px" id="modal-versiones-body">
+      <div class="loading-spin"></div>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
@@ -307,6 +497,9 @@ import {
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
@@ -317,8 +510,9 @@ const firebaseConfig = {
   appId: "1:137545616566:web:f74736d93682e2727dea17"
 };
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const auth = getAuth(app);
+const db      = getFirestore(app);
+const auth    = getAuth(app);
+const storage = getStorage(app);
 
 const NIVELES = {
   institucional: { label:'Institucional',    color:'#C9A84C', icon:'■' },
@@ -795,103 +989,786 @@ window.renderArticulosFiltrado = async function(edIdDefault) {
   list.innerHTML = `<div style="margin-bottom:10px;font-size:11px;color:var(--muted)">${arts.length} artículo${arts.length!==1?'s':''}</div>` + html;
 };
 
-// ═══ EDITOR DE BLOQUES (texto / foto / video) ═══════════════════
+// ═══ RICH TEXT EDITOR ════════════════════════════════════════
 let bloques = [];
-
 function nuevoBloqueId() { return 'b_' + Math.random().toString(36).slice(2,9); }
 
 function bloquesDesdeArticulo(art) {
-  // Si el artículo ya tiene bloques, usarlos tal cual
   if (art && Array.isArray(art.bloques) && art.bloques.length) {
     return art.bloques.map(b => ({...b, id: b.id || nuevoBloqueId()}));
   }
-  // Migración: artículos viejos con cuerpo + imagenUrl sueltos
   const migrados = [];
   if (art?.cuerpo && art.cuerpo.trim()) {
-    migrados.push({ id: nuevoBloqueId(), tipo:'texto', texto: art.cuerpo });
+    const html = art.cuerpo.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('');
+    migrados.push({ id: nuevoBloqueId(), tipo:'texto', html });
   }
   if (art?.imagenUrl && art.imagenUrl.trim()) {
     migrados.push({ id: nuevoBloqueId(), tipo:'imagen', url: art.imagenUrl, caption:'', layout:'full' });
   }
-  if (!migrados.length) migrados.push({ id: nuevoBloqueId(), tipo:'texto', texto:'' });
+  if (!migrados.length) migrados.push({ id: nuevoBloqueId(), tipo:'texto', html:'<p></p>' });
   return migrados;
 }
 
-window.agregarBloque = function(tipo) {
+// ── TOOLBAR HTML ──────────────────────────────────────────────
+function htmlToolbar(bid) {
+  return `
+  <div class="rte-toolbar">
+    <select onchange="rteBlock('${bid}',this.value);this.value=''" title="Estilo de párrafo">
+      <option value="">Estilo…</option>
+      <option value="p">Párrafo</option>
+      <option value="h2">Título grande</option>
+      <option value="h3">Título mediano</option>
+      <option value="blockquote">Cita destacada</option>
+    </select>
+    <select onchange="rteFuente('${bid}',this.value);this.value=''" title="Tipografía">
+      <option value="">Fuente…</option>
+      <option value="'EB Garamond',serif">Garamond</option>
+      <option value="'Playfair Display',serif">Playfair</option>
+      <option value="'Lato',sans-serif">Lato</option>
+      <option value="monospace">Monospace</option>
+    </select>
+    <select onchange="rteTamaño('${bid}',this.value);this.value=''" title="Tamaño">
+      <option value="">Tamaño…</option>
+      <option value="11px">Pequeño</option>
+      <option value="14px">Normal</option>
+      <option value="17px">Grande</option>
+      <option value="21px">Muy grande</option>
+    </select>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('bold')"         title="Negrita (Ctrl+B)"><b style="font-size:12px">B</b></button>
+    <button onclick="rteCmd('italic')"       title="Cursiva (Ctrl+I)"><i style="font-size:12px">I</i></button>
+    <button onclick="rteCmd('underline')"    title="Subrayado (Ctrl+U)"><u style="font-size:11px">S</u></button>
+    <button onclick="rteCmd('strikeThrough')" title="Tachado"><s style="font-size:11px">T</s></button>
+    <div class="rte-sep"></div>
+    <button class="rte-color-btn" title="Color de texto">
+      <span style="font-size:11px;font-weight:900;pointer-events:none">A</span>
+      <input type="color" value="#C9A84C" onchange="rteColor(this.value)" title="Color">
+    </button>
+    <button class="rte-color-btn" title="Resaltado">
+      <span style="font-size:10px;font-weight:900;background:#fff3b0;color:#333;padding:1px 2px;border-radius:2px;pointer-events:none">A</span>
+      <input type="color" value="#fff3b0" onchange="rteHighlight(this.value)" title="Resaltado">
+    </button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('insertUnorderedList')" title="Lista">☰</button>
+    <button onclick="rteCmd('insertOrderedList')"   title="Lista num.">1.</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('justifyLeft')"   title="Izquierda" style="font-size:11px">⇤</button>
+    <button onclick="rteCmd('justifyCenter')" title="Centrar"   style="font-size:11px">≡</button>
+    <button onclick="rteCmd('justifyRight')"  title="Derecha"   style="font-size:11px">⇥</button>
+    <button onclick="rteCmd('justifyFull')"   title="Justificar" style="font-size:11px">▤</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('indent')"  title="Más sangría" style="font-size:11px">→</button>
+    <button onclick="rteCmd('outdent')" title="Menos sangría" style="font-size:11px">←</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteLink('${bid}')" title="Enlace">🔗</button>
+    <button onclick="rteCmd('removeFormat')" title="Limpiar formato" style="font-size:9px;width:auto;padding:0 5px">✕fmt</button>
+    <div class="rte-sep"></div>
+    <button onclick="rteCmd('undo')" title="Deshacer">↩</button>
+    <button onclick="rteCmd('redo')" title="Rehacer">↪</button>
+    <div class="rte-sep"></div>
+    <button class="pq-btn" onclick="insertarPullQuote('${bid}')" title="Convertir selección en cita destacada (pull quote)">« Cita »</button>
+  </div>`;
+}
+
+// ── COMANDOS RTE ─────────────────────────────────────────────
+window.rteCmd = cmd => document.execCommand(cmd, false, null);
+
+window.rteBlock = function(bid, tag) {
+  if (!tag) return;
+  document.getElementById('rte-'+bid)?.focus();
+  document.execCommand('formatBlock', false, tag);
+};
+window.rteFuente = function(bid, font) {
+  if (!font) return;
+  document.getElementById('rte-'+bid)?.focus();
+  document.execCommand('fontName', false, font);
+};
+window.rteTamaño = function(bid, size) {
+  if (!size) return;
+  document.getElementById('rte-'+bid)?.focus();
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+    const range = sel.getRangeAt(0);
+    const span  = document.createElement('span');
+    span.style.fontSize = size;
+    try { range.surroundContents(span); } catch { document.execCommand('fontSize',false,'3'); }
+  }
+};
+window.rteColor     = color => document.execCommand('foreColor',  false, color);
+window.rteHighlight = color => document.execCommand('hiliteColor',false, color);
+window.rteLink = function(bid) {
+  const url = prompt('URL del enlace:', 'https://');
+  if (!url) return;
+  document.getElementById('rte-'+bid)?.focus();
+  document.execCommand('createLink', false, url);
+};
+
+// ── BLOQUES CRUD ─────────────────────────────────────────────
+function agregarBloque(tipo) {
   const b = { id: nuevoBloqueId(), tipo };
-  if (tipo === 'texto')  b.texto = '';
-  if (tipo === 'imagen') { b.url = ''; b.caption = ''; b.layout = 'full'; }
-  if (tipo === 'video')  { b.url = ''; b.caption = ''; }
+  if (tipo === 'texto')     { b.html = '<p></p>'; }
+  if (tipo === 'imagen')    { b.url = ''; b.caption = ''; b.layout = 'full'; }
+  if (tipo === 'video')     { b.url = ''; b.caption = ''; }
+  if (tipo === 'separador') { b.estilo = 'doble'; }
   bloques.push(b);
   renderBloquesEditor();
-};
+  if (tipo === 'texto') setTimeout(() => document.getElementById('rte-'+b.id)?.focus(), 60);
+}
+window.agregarBloque = agregarBloque;
 
 window.eliminarBloque = function(id) {
   bloques = bloques.filter(b => b.id !== id);
-  if (!bloques.length) bloques = [{ id: nuevoBloqueId(), tipo:'texto', texto:'' }];
+  if (!bloques.length) bloques = [{ id:nuevoBloqueId(), tipo:'texto', html:'<p></p>' }];
   renderBloquesEditor();
 };
-
 window.moverBloque = function(id, dir) {
   const i = bloques.findIndex(b => b.id === id);
   const j = i + dir;
-  if (i < 0 || j < 0 || j >= bloques.length) return;
-  [bloques[i], bloques[j]] = [bloques[j], bloques[i]];
+  if (i<0||j<0||j>=bloques.length) return;
+  [bloques[i],bloques[j]] = [bloques[j],bloques[i]];
+  renderBloquesEditor();
+};
+window.duplicarBloque = function(id) {
+  const i = bloques.findIndex(b => b.id === id);
+  if (i<0) return;
+  bloques.splice(i+1, 0, {...bloques[i], id:nuevoBloqueId()});
   renderBloquesEditor();
 };
 
-window.actualizarBloque = function(id, campo, valor) {
-  const b = bloques.find(b => b.id === id);
-  if (b) b[campo] = valor;
+// Sincronizar HTML de contenteditable antes de guardar
+function sincronizarBloques() {
+  bloques.forEach(b => {
+    if (b.tipo === 'texto') {
+      const el = document.getElementById('rte-'+b.id);
+      if (el) b.html = el.innerHTML;
+    }
+    if (b.tipo === 'imagen') {
+      const u=document.getElementById('img-url-'+b.id);
+      const c=document.getElementById('img-cap-'+b.id);
+      const l=document.getElementById('img-lay-'+b.id);
+      if(u) b.url=u.value.trim(); if(c) b.caption=c.value.trim(); if(l) b.layout=l.value;
+    }
+    if (b.tipo === 'video') {
+      const u=document.getElementById('vid-url-'+b.id);
+      const c=document.getElementById('vid-cap-'+b.id);
+      if(u) b.url=u.value.trim(); if(c) b.caption=c.value.trim();
+    }
+  });
+}
+
+window.prevImgBloque = function(bid) {
+  const url  = document.getElementById('img-url-'+bid)?.value?.trim();
+  const prev = document.getElementById('img-prev-'+bid);
+  if (!prev) return;
+  if (!url) { prev.style.display='none'; return; }
+  const m = url.match(/\/d\/([^/?#]+)/);
+  prev.src = m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : url;
+  prev.style.display = 'block';
 };
 
+// ── HTML BLOQUE ───────────────────────────────────────────────
 function htmlBloque(b, i, total) {
   const ctrls = `
     <div class="bloque-ctrls">
       <button type="button" onclick="moverBloque('${b.id}',-1)" ${i===0?'disabled':''} title="Subir">↑</button>
-      <button type="button" onclick="moverBloque('${b.id}',1)" ${i===total-1?'disabled':''} title="Bajar">↓</button>
+      <button type="button" onclick="moverBloque('${b.id}',1)"  ${i===total-1?'disabled':''} title="Bajar">↓</button>
+      <button type="button" onclick="duplicarBloque('${b.id}')" title="Duplicar">⎘</button>
       <button type="button" class="del" onclick="eliminarBloque('${b.id}')" title="Eliminar">✕</button>
     </div>`;
 
   if (b.tipo === 'texto') {
     return `
-      <div class="bloque-item">
+      <div class="bloque-item" id="bloque-${b.id}">
         <div class="bloque-head"><span class="bloque-tag">📝 Texto</span>${ctrls}</div>
-        <textarea class="ai" rows="4" placeholder="Escribí un párrafo…" oninput="actualizarBloque('${b.id}','texto',this.value)">${esc(b.texto)}</textarea>
+        <div class="rte-wrap">
+          ${htmlToolbar(b.id)}
+          <div id="rte-${b.id}" class="rte-body" contenteditable="true"
+            data-placeholder="Escribí el contenido acá…"
+            oninput="bloques.find(x=>x.id==='${b.id}').html=this.innerHTML;marcarCambio()"
+            onkeydown="if(event.key==='Tab'){event.preventDefault();document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;')}"
+            onload="setupPegadoLimpio(this)"
+          >${b.html||'<p></p>'}</div>
+        </div>
       </div>`;
   }
+
   if (b.tipo === 'imagen') {
+    const prevUrl = b.url ? (b.url.match(/\/d\/([^/?#]+)/)?`https://drive.google.com/uc?export=view&id=${b.url.match(/\/d\/([^/?#]+)/)[1]}`:b.url) : '';
     return `
-      <div class="bloque-item">
-        <div class="bloque-head"><span class="bloque-tag">🖼️ Foto</span>${ctrls}</div>
-        <input class="ai" placeholder="Link de Google Drive u otra imagen" value="${esc(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
-        <input class="ai" placeholder="Pie de foto (opcional)" value="${esc(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
-        <select class="ai" onchange="actualizarBloque('${b.id}','layout',this.value)">
-          <option value="full" ${(b.layout||'full')==='full'?'selected':''}>Ancho completo</option>
-          <option value="left" ${b.layout==='left'?'selected':''}>A la izquierda (texto al costado)</option>
-          <option value="right" ${b.layout==='right'?'selected':''}>A la derecha (texto al costado)</option>
-        </select>
+      <div class="bloque-item" id="bloque-${b.id}">
+        <div class="bloque-head"><span class="bloque-tag">🖼️ Imagen</span>${ctrls}</div>
+        <div class="img-preview-wrap">
+          <!-- Subida directa -->
+          <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-gold btn-sm" type="button" onclick="abrirUploadImagen('${b.id}')">⬆ Subir desde mi dispositivo</button>
+            <span style="font-size:10px;color:var(--muted)">o pegá un link:</span>
+          </div>
+          <div class="upload-progress" id="upload-prog-${b.id}">
+            <div class="upload-progress-fill" id="upload-fill-${b.id}"></div>
+          </div>
+          <div id="upload-status-${b.id}" style="font-size:10px;color:var(--ok);margin-bottom:6px;display:none"></div>
+          <div class="field" style="margin-bottom:8px">
+            <label class="lbl">URL de imagen (Google Drive u otro)</label>
+            <input class="ai" id="img-url-${b.id}" value="${esc(b.url||'')}"
+              placeholder="https://drive.google.com/file/d/…/view"
+              oninput="bloques.find(x=>x.id==='${b.id}').url=this.value;marcarCambio()">
+          </div>
+          <button class="btn btn-ghost btn-sm" type="button" onclick="prevImgBloque('${b.id}')" style="margin-bottom:8px">👁 Previsualizar</button>
+          ${prevUrl?`<img id="img-prev-${b.id}" class="img-preview-thumb" src="${prevUrl}" onerror="this.style.display='none'">`:
+                    `<img id="img-prev-${b.id}" class="img-preview-thumb" style="display:none">`}
+          <div class="field" style="margin-top:8px;margin-bottom:8px">
+            <label class="lbl">Pie de foto</label>
+            <input class="ai" id="img-cap-${b.id}" value="${esc(b.caption||'')}" placeholder="Descripción de la imagen…"
+              oninput="bloques.find(x=>x.id==='${b.id}').caption=this.value;marcarCambio()">
+          </div>
+          <div class="field">
+            <label class="lbl">Posición</label>
+            <select class="ai" id="img-lay-${b.id}" onchange="bloques.find(x=>x.id==='${b.id}').layout=this.value;marcarCambio()">
+              <option value="full"  ${(b.layout||'full')==='full' ?'selected':''}>Ancho completo</option>
+              <option value="left"  ${b.layout==='left' ?'selected':''}>Izquierda (texto a la derecha)</option>
+              <option value="right" ${b.layout==='right'?'selected':''}>Derecha (texto a la izquierda)</option>
+            </select>
+          </div>
+        </div>
       </div>`;
   }
+
   if (b.tipo === 'video') {
     return `
-      <div class="bloque-item">
+      <div class="bloque-item" id="bloque-${b.id}">
         <div class="bloque-head"><span class="bloque-tag">🎬 Video</span>${ctrls}</div>
-        <input class="ai" placeholder="Link de YouTube, Vimeo, Drive o archivo .mp4" value="${esc(b.url)}" oninput="actualizarBloque('${b.id}','url',this.value)">
-        <input class="ai" placeholder="Descripción del video (opcional)" value="${esc(b.caption)}" oninput="actualizarBloque('${b.id}','caption',this.value)">
+        <div class="img-preview-wrap">
+          <div class="field" style="margin-bottom:8px">
+            <label class="lbl">Link del video</label>
+            <input class="ai" id="vid-url-${b.id}" value="${esc(b.url||'')}"
+              placeholder="YouTube, Vimeo, Google Drive o .mp4"
+              oninput="bloques.find(x=>x.id==='${b.id}').url=this.value">
+            <span style="font-size:11px;color:var(--muted);margin-top:4px">YouTube, Vimeo y Google Drive se incrustan automáticamente.</span>
+          </div>
+          <div class="field">
+            <label class="lbl">Descripción</label>
+            <input class="ai" id="vid-cap-${b.id}" value="${esc(b.caption||'')}" placeholder="Ej: Acto de fin de año"
+              oninput="bloques.find(x=>x.id==='${b.id}').caption=this.value">
+          </div>
+        </div>
+      </div>`;
+  }
+
+  if (b.tipo === 'separador') {
+    return `
+      <div class="bloque-item" id="bloque-${b.id}">
+        <div class="bloque-head"><span class="bloque-tag">— Separador</span>${ctrls}</div>
+        <div style="padding:10px 12px">
+          <select class="ai" onchange="bloques.find(x=>x.id==='${b.id}').estilo=this.value">
+            <option value="simple"     ${(b.estilo||'doble')==='simple'    ?'selected':''}>Línea simple</option>
+            <option value="doble"      ${b.estilo==='doble'                ?'selected':''}>Línea doble (editorial)</option>
+            <option value="ornamental" ${b.estilo==='ornamental'           ?'selected':''}>Ornamental (✦ ✦ ✦)</option>
+          </select>
+        </div>
       </div>`;
   }
   return '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// PLANTILLAS DE ARTÍCULO
+// ══════════════════════════════════════════════════════════════
+const PLANTILLAS = [
+  {
+    id: 'noticia',
+    icono: '📰',
+    nombre: 'Noticia',
+    desc: 'Un hecho reciente con foto principal y desarrollo en texto.',
+    nivel: 'institucional', tipo: 'noticia',
+    bloques: [
+      { tipo:'texto', html:'<p>Escribí acá el lead de la noticia — la información más importante en el primer párrafo.</p><p>Desarrollá los detalles: ¿qué pasó? ¿cuándo? ¿quiénes participaron?</p>' },
+      { tipo:'imagen', url:'', caption:'', layout:'full' },
+      { tipo:'texto', html:'<p>Continuá con el contexto o el cierre de la nota.</p>' },
+    ]
+  },
+  {
+    id: 'galeria',
+    icono: '📸',
+    nombre: 'Galería de fotos',
+    desc: 'Varias fotos con texto breve de presentación.',
+    nivel: 'institucional', tipo: 'galeria',
+    bloques: [
+      { tipo:'texto', html:'<p>Breve descripción del evento o actividad que se muestra en las fotos.</p>' },
+      { tipo:'imagen', url:'', caption:'Foto 1 — describila acá', layout:'full' },
+      { tipo:'imagen', url:'', caption:'Foto 2 — describila acá', layout:'left' },
+      { tipo:'imagen', url:'', caption:'Foto 3 — describila acá', layout:'right' },
+    ]
+  },
+  {
+    id: 'proyecto',
+    icono: '🔬',
+    nombre: 'Proyecto pedagógico',
+    desc: 'Explicación de un proyecto con contexto, desarrollo y cierre.',
+    nivel: 'primaria', tipo: 'proyecto',
+    bloques: [
+      { tipo:'texto', html:'<h2>Contexto</h2><p>¿Por qué surgió este proyecto? ¿Qué necesidad o curiosidad lo motivó?</p>' },
+      { tipo:'texto', html:'<h2>Desarrollo</h2><p>¿Cómo se trabajó? ¿Qué actividades se hicieron? ¿Cuánto tiempo llevó?</p>' },
+      { tipo:'imagen', url:'', caption:'', layout:'full' },
+      { tipo:'texto', html:'<h2>Aprendizajes</h2><p>¿Qué aprendieron los chicos? ¿Cómo impactó en ellos?</p><blockquote>Podés agregar acá una frase de un alumno o del docente.</blockquote>' },
+    ]
+  },
+  {
+    id: 'evento',
+    icono: '🎉',
+    nombre: 'Evento / Acto',
+    desc: 'Cobertura de un acto, festejo o jornada especial.',
+    nivel: 'institucional', tipo: 'evento',
+    bloques: [
+      { tipo:'imagen', url:'', caption:'', layout:'full' },
+      { tipo:'texto', html:'<p>Describí el evento: ¿de qué se trató? ¿quiénes participaron? ¿cuándo fue?</p>' },
+      { tipo:'texto', html:'<p>Momento destacado o dato especial del evento.</p><blockquote>Citá a alguien del evento si tenés una frase memorable.</blockquote>' },
+    ]
+  },
+  {
+    id: 'comunicado',
+    icono: '📢',
+    nombre: 'Comunicado',
+    desc: 'Aviso o comunicado institucional breve.',
+    nivel: 'institucional', tipo: 'comunicado',
+    bloques: [
+      { tipo:'texto', html:'<p><strong>Estimadas familias:</strong></p><p>Escribí acá el contenido del comunicado.</p>' },
+      { tipo:'separador', estilo:'doble' },
+      { tipo:'texto', html:'<p><em>Dirección del Colegio Rabino Iosef Caro</em></p>' },
+    ]
+  },
+  {
+    id: 'largo',
+    icono: '📖',
+    nombre: 'Artículo largo',
+    desc: 'Múltiples secciones con títulos, fotos y cita destacada.',
+    nivel: 'institucional', tipo: 'noticia',
+    bloques: [
+      { tipo:'imagen', url:'', caption:'', layout:'full' },
+      { tipo:'texto', html:'<h2>Introducción</h2><p>Primer párrafo con el contexto general del artículo. Presentá el tema de forma atractiva.</p>' },
+      { tipo:'texto', html:'<h2>Desarrollo</h2><p>Cuerpo principal del artículo. Podés dividirlo en sub-secciones.</p>' },
+      { tipo:'imagen', url:'', caption:'', layout:'left' },
+      { tipo:'texto', html:'<blockquote>Cita destacada que resume la idea central del artículo.</blockquote><p>Párrafo adicional de cierre.</p>' },
+      { tipo:'separador', estilo:'ornamental' },
+      { tipo:'texto', html:'<p><em>Cierre del artículo con reflexión final.</em></p>' },
+    ]
+  },
+];
+
+let plantillaSeleccionada = null;
+
+window.abrirModalPlantillas = function() {
+  plantillaSeleccionada = null;
+  const grid = document.getElementById('plantillas-grid');
+  grid.innerHTML = PLANTILLAS.map(p => `
+    <button class="plantilla-card" id="plt-${p.id}" onclick="seleccionarPlantilla('${p.id}')">
+      <div class="plantilla-icono">${p.icono}</div>
+      <div class="plantilla-nombre">${p.nombre}</div>
+      <div class="plantilla-desc">${p.desc}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:4px">${p.bloques.length} bloque${p.bloques.length!==1?'s':''}</div>
+    </button>
+  `).join('');
+  abrirModal('modal-plantillas');
+};
+
+window.seleccionarPlantilla = function(id) {
+  plantillaSeleccionada = id;
+  document.querySelectorAll('.plantilla-card').forEach(el => el.classList.remove('selected'));
+  document.getElementById('plt-'+id)?.classList.add('selected');
+};
+
+window.aplicarPlantilla = function() {
+  if (!plantillaSeleccionada) { toast('Seleccioná una plantilla primero','warn'); return; }
+  const plt = PLANTILLAS.find(p => p.id === plantillaSeleccionada);
+  if (!plt) return;
+  if (bloques.length > 1 || (bloques[0]?.html||'').replace(/<[^>]*>/g,'').trim()) {
+    if (!confirm('¿Reemplazar el contenido actual con la plantilla?')) return;
+  }
+  bloques = plt.bloques.map(b => ({...b, id: nuevoBloqueId()}));
+  if (plt.nivel) { const el=document.getElementById('art-nivel'); if(el) el.value=plt.nivel; }
+  if (plt.tipo)  { const el=document.getElementById('art-tipo');  if(el) el.value=plt.tipo;  }
+  renderBloquesEditor();
+  actualizarPreviewEditor();
+  cerrarModal('modal-plantillas');
+  toast('Plantilla aplicada ✓');
+};
+
+// ══════════════════════════════════════════════════════════════
+// AUTOGUARDADO + STATUS BAR
+// ══════════════════════════════════════════════════════════════
+let autoguardadoTimer  = null;
+let artIdActual        = null;
+let ultimoGuardado     = null;
+let cambiosPendientes  = false;
+
+function iniciarAutoguardado(artId) {
+  artIdActual = artId;
+  if (autoguardadoTimer) clearInterval(autoguardadoTimer);
+  autoguardadoTimer = setInterval(async () => {
+    if (!cambiosPendientes || !artIdActual) return;
+    await autoguardar();
+  }, 30000); // cada 30 seg
+}
+
+async function autoguardar() {
+  setAutosaveDot('saving');
+  sincronizarBloques();
+  try {
+    const data = recopilarDatosArticulo('borrador');
+    if (artIdActual) {
+      await updateDoc(doc(db,'articulos',artIdActual), {...data, actualizadoEn: serverTimestamp()});
+    } else {
+      data.creadoEn = serverTimestamp();
+      const ref = await addDoc(collection(db,'articulos'), data);
+      artIdActual = ref.id;
+    }
+    ultimoGuardado = new Date();
+    cambiosPendientes = false;
+    setAutosaveDot('saved');
+    actualizarStatusBar();
+  } catch(e) {
+    setAutosaveDot('error');
+    console.warn('Autoguardado falló:', e.message);
+  }
+}
+
+function setAutosaveDot(estado) {
+  const dot = document.getElementById('autosave-dot');
+  if (!dot) return;
+  dot.className = 'autosave-dot' + (estado==='saving'?' saving':estado==='saved'?' saved':'');
+  const lbl = document.getElementById('autosave-lbl');
+  if (!lbl) return;
+  if (estado==='saving') lbl.textContent = 'Guardando…';
+  else if (estado==='saved') lbl.textContent = 'Guardado ' + horaCorta(ultimoGuardado);
+  else lbl.textContent = 'Error al guardar';
+}
+
+function actualizarStatusBar() {
+  const countEl = document.getElementById('word-count-status');
+  const timeEl  = document.getElementById('read-time-status');
+  if (!countEl || !timeEl) return;
+  const words = contarPalabras();
+  countEl.textContent = words.toLocaleString() + ' palabras';
+  timeEl.textContent  = Math.max(1, Math.round(words/200)) + ' min lectura';
+}
+
+function contarPalabras() {
+  return bloques
+    .filter(b => b.tipo==='texto')
+    .reduce((total, b) => {
+      const txt = (b.html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+      return total + (txt ? txt.split(' ').length : 0);
+    }, 0);
+}
+
+function horaCorta(d) {
+  if (!d) return '';
+  return d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function htmlStatusBar(artId) {
+  return `
+    <div class="editor-statusbar">
+      <div class="status-item">
+        <div class="autosave-dot" id="autosave-dot"></div>
+        <span id="autosave-lbl" style="font-size:10px">Sin guardar aún</span>
+      </div>
+      <div class="status-item" style="gap:14px">
+        <span id="word-count-status">0 palabras</span>
+        <span id="read-time-status">0 min lectura</span>
+        ${artId ? `<button class="btn btn-ghost btn-sm" onclick="abrirVersiones('${artId}')" style="font-size:9px;padding:3px 9px">🕐 Versiones</button>` : ''}
+      </div>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// SUBIDA DE IMÁGENES DIRECTA (Firebase Storage)
+// ══════════════════════════════════════════════════════════════
+window.abrirUploadImagen = function(bloqueId) {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    await subirImagen(file, bloqueId);
+  };
+  input.click();
+};
+
+async function subirImagen(file, bloqueId) {
+  const progWrap = document.getElementById('upload-prog-'+bloqueId);
+  const progFill = document.getElementById('upload-fill-'+bloqueId);
+  const urlInput = document.getElementById('img-url-'+bloqueId);
+  const statusEl = document.getElementById('upload-status-'+bloqueId);
+
+  if (progWrap) progWrap.style.display = 'block';
+  if (statusEl) statusEl.textContent   = 'Subiendo…';
+
+  const ext   = file.name.split('.').pop();
+  const path  = `revista/imagenes/${Date.now()}_${Math.random().toString(36).slice(2,7)}.${ext}`;
+  const sRef  = storageRef(storage, path);
+  const task  = uploadBytesResumable(sRef, file);
+
+  task.on('state_changed',
+    snap => {
+      const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+      if (progFill) progFill.style.width = pct + '%';
+      if (statusEl) statusEl.textContent = pct + '%';
+    },
+    err => {
+      if (statusEl) statusEl.textContent = 'Error: ' + err.message;
+      toast('Error al subir la imagen: ' + err.message, 'err');
+    },
+    async () => {
+      const url = await getDownloadURL(task.snapshot.ref);
+      if (urlInput) urlInput.value = url;
+      const b = bloques.find(x => x.id === bloqueId);
+      if (b) b.url = url;
+      if (progWrap) progWrap.style.display = 'none';
+      if (statusEl) statusEl.textContent   = '✓ Subida exitosa';
+      // Mostrar preview
+      prevImgBloque(bloqueId);
+      toast('Imagen subida ✓');
+      marcarCambio();
+    }
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// HISTORIAL DE VERSIONES
+// ══════════════════════════════════════════════════════════════
+async function guardarVersion(artId, datosActuales) {
+  try {
+    await addDoc(collection(db, 'articulos', artId, 'versiones'), {
+      ...datosActuales,
+      guardadoEn: serverTimestamp(),
+      guardadoPor: auth.currentUser?.email || '—',
+    });
+  } catch(e) { console.warn('No se pudo guardar versión:', e.message); }
+}
+
+window.abrirVersiones = async function(artId) {
+  const body = document.getElementById('modal-versiones-body');
+  body.innerHTML = '<div class="loading-spin"></div>';
+  abrirModal('modal-versiones');
+  try {
+    const sn = await getDocs(
+      query(collection(db,'articulos',artId,'versiones'), orderBy('guardadoEn','desc'))
+    );
+    const vers = sn.docs.map(d => ({id:d.id,...d.data()}));
+    if (!vers.length) {
+      body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-style:italic">No hay versiones anteriores guardadas todavía.<br>Las versiones se crean automáticamente al publicar.</div>';
+      return;
+    }
+    body.innerHTML = `
+      <div style="margin-bottom:12px;font-size:12px;color:var(--muted)">${vers.length} versión${vers.length!==1?'es':''} guardada${vers.length!==1?'s':''}</div>
+      ${vers.map((v,i) => `
+        <div class="version-item">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--white)">${v.titulo||'Sin título'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">
+              ${v.guardadoPor||'—'} · ${v.guardadoEn ? formatFecha(v.guardadoEn) : '—'}
+            </div>
+          </div>
+          <span class="version-badge ${i===0?'version-actual':'version-ant'}">${i===0?'Última':'v'+(vers.length-i)}</span>
+          <button class="btn btn-ghost btn-sm" onclick="restaurarVersion('${artId}','${v.id}')">Restaurar</button>
+        </div>
+      `).join('')}
+    `;
+  } catch(e) {
+    body.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+  }
+};
+
+window.restaurarVersion = async function(artId, versionId) {
+  if (!confirm('¿Restaurar esta versión? El contenido actual se reemplazará (se guardará una versión de seguridad antes).')) return;
+  try {
+    const snVer = await getDoc(doc(db,'articulos',artId,'versiones',versionId));
+    if (!snVer.exists()) { toast('Versión no encontrada','err'); return; }
+    // Guardar estado actual como versión de seguridad
+    sincronizarBloques();
+    await guardarVersion(artId, recopilarDatosArticulo(document.getElementById('art-nivel')?.value||'borrador'));
+    // Restaurar
+    const data = snVer.data();
+    delete data.guardadoEn; delete data.guardadoPor;
+    await updateDoc(doc(db,'articulos',artId), {...data, actualizadoEn: serverTimestamp()});
+    toast('Versión restaurada ✓');
+    cerrarModal('modal-versiones');
+    cerrarModal('modal-art');
+    if (currentTab==='revision') renderRevision();
+    else renderArticulos();
+  } catch(e) { toast('Error: '+e.message,'err'); }
+};
+
+// ══════════════════════════════════════════════════════════════
+// PULL QUOTE DESDE SELECCIÓN
+// ══════════════════════════════════════════════════════════════
+window.insertarPullQuote = function(bid) {
+  const rte = document.getElementById('rte-'+bid);
+  if (!rte) return;
+  rte.focus();
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) {
+    // Sin selección: insertar blockquote vacío
+    document.execCommand('formatBlock', false, 'blockquote');
+    return;
+  }
+  const texto = sel.toString().trim();
+  if (!texto) { toast('Seleccioná el texto que querés convertir en cita', 'warn'); return; }
+  document.execCommand('formatBlock', false, 'blockquote');
+};
+
+// ══════════════════════════════════════════════════════════════
+// PEGADO INTELIGENTE (limpiar estilos de Word/Docs)
+// ══════════════════════════════════════════════════════════════
+function setupPegadoLimpio(rteEl) {
+  rteEl.addEventListener('paste', e => {
+    e.preventDefault();
+    const html  = e.clipboardData.getData('text/html');
+    const texto = e.clipboardData.getData('text/plain');
+    if (html) {
+      const limpio = limpiarHTMLPegado(html);
+      document.execCommand('insertHTML', false, limpio);
+    } else {
+      // Texto plano: convertir líneas en párrafos
+      const parrafos = texto.split('\n').filter(l=>l.trim()).map(l=>`<p>${l}</p>`).join('');
+      document.execCommand('insertHTML', false, parrafos || texto);
+    }
+    marcarCambio();
+  });
+}
+
+function limpiarHTMLPegado(html) {
+  const parser = new DOMParser();
+  const doc2   = parser.parseFromString(html, 'text/html');
+  // Eliminar estilos inline basura de Word/Docs pero mantener semántica
+  doc2.querySelectorAll('[style]').forEach(el => {
+    // Mantener solo font-weight, font-style, text-decoration
+    const style = el.getAttribute('style');
+    const keep  = [];
+    if (/font-weight:\s*bold|font-weight:\s*[6-9]\d\d/.test(style))         keep.push('font-weight:bold');
+    if (/font-style:\s*italic/.test(style))                                   keep.push('font-style:italic');
+    if (/text-decoration:\s*underline/.test(style))                           keep.push('text-decoration:underline');
+    if (keep.length) el.setAttribute('style', keep.join(';'));
+    else             el.removeAttribute('style');
+  });
+  // Eliminar clases de Word/Docs
+  doc2.querySelectorAll('[class]').forEach(el => el.removeAttribute('class'));
+  // Eliminar spans vacíos innecesarios
+  doc2.querySelectorAll('span').forEach(el => {
+    if (!el.getAttribute('style') && !el.className) {
+      el.replaceWith(...el.childNodes);
+    }
+  });
+  // Eliminar comentarios de Word
+  const body = doc2.body;
+  return body.innerHTML
+    .replace(/<!--[\s\S]*?-->/g,'')
+    .replace(/<o:p>.*?<\/o:p>/gi,'')
+    .replace(/<w:[^>]*>.*?<\/w:[^>]*>/gi,'')
+    .replace(/<m:[^>]*>.*?<\/m:[^>]*>/gi,'');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PREVIEW EN TIEMPO REAL
+// ══════════════════════════════════════════════════════════════
+let previewTimer = null;
+
+function actualizarPreviewEditor() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    const prev = document.getElementById('preview-live');
+    if (!prev) return;
+    const nivel  = document.getElementById('art-nivel')?.value || 'institucional';
+    const titulo = document.getElementById('art-titulo')?.value || '';
+    const bajada = document.getElementById('art-bajada')?.value || '';
+    const COLS = {
+      institucional:'#C9A84C',inicial:'#C07030',primaria:'#2A7A50',
+      secundaria:'#2A50A0',reshit:'#7030A0'
+    };
+    const LABS = {
+      institucional:'Institucional',inicial:'Nivel Inicial',primaria:'Nivel Primario',
+      secundaria:'Nivel Secundario',reshit:'Reshit'
+    };
+    const color = COLS[nivel] || '#C9A84C';
+    const label = LABS[nivel] || nivel;
+
+    // Construir HTML de cuerpo desde bloques actuales
+    const cuerpoHTML = bloques.map(b => {
+      if (b.tipo==='texto') return `<div class="prev-body">${b.html||''}</div>`;
+      if (b.tipo==='imagen' && b.url) {
+        const m = b.url.match(/\/d\/([^/?#]+)/);
+        const src = m ? `https://drive.google.com/uc?export=view&id=${m[1]}` : b.url;
+        return `<img src="${src}" style="max-width:100%;border-radius:4px;margin:8px 0" onerror="this.style.display='none'"><div style="font-size:9px;color:#8888AA;font-style:italic;margin-bottom:8px">${esc(b.caption||'')}</div>`;
+      }
+      if (b.tipo==='separador') {
+        if (b.estilo==='ornamental') return `<div style="text-align:center;color:#C9A84C;font-size:14px;margin:12px 0;letter-spacing:8px">✦ ✦ ✦</div>`;
+        if (b.estilo==='doble') return `<div style="border-top:2px solid #1A1A2E;height:4px;border-bottom:1px solid #1A1A2E;margin:12px 0"></div>`;
+        return `<hr style="border:none;border-top:1px solid #D4C9A8;margin:12px 0">`;
+      }
+      return '';
+    }).join('');
+
+    prev.innerHTML = `
+      <div class="prev-kicker" style="color:${color}">■ ${label}</div>
+      <div class="prev-titulo">${esc(titulo)||'<span style="color:#aaa">Título…</span>'}</div>
+      ${bajada ? `<div class="prev-bajada">${esc(bajada)}</div>` : ''}
+      ${cuerpoHTML || '<div style="color:#aaa;font-style:italic;font-size:12px;padding:10px 0">El contenido aparecerá acá…</div>'}
+    `;
+  }, 300);
+}
+
+function marcarCambio() {
+  cambiosPendientes = true;
+  setAutosaveDot('pending');
+  const lbl = document.getElementById('autosave-lbl');
+  if (lbl) lbl.textContent = 'Con cambios sin guardar';
+  actualizarStatusBar();
+  actualizarPreviewEditor();
+}
+
+// Función helper que junta datos del formulario
+function recopilarDatosArticulo(estado) {
+  sincronizarBloques();
+  const bloquesValidos = bloques.filter(b => {
+    if (b.tipo==='texto')     return (b.html||'').replace(/<[^>]*>/g,'').trim();
+    if (b.tipo==='separador') return true;
+    return b.url && b.url.trim();
+  });
+  const cuerpo = bloquesValidos
+    .filter(b=>b.tipo==='texto')
+    .map(b=>(b.html||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim())
+    .join('\n\n');
+  const primeraImagen = bloquesValidos.find(b=>b.tipo==='imagen');
+  return {
+    nivel:     document.getElementById('art-nivel')?.value || '',
+    tipo:      document.getElementById('art-tipo')?.value  || '',
+    titulo:    document.getElementById('art-titulo')?.value?.trim()  || '',
+    bajada:    document.getElementById('art-bajada')?.value?.trim()  || '',
+    autor:     document.getElementById('art-autor')?.value?.trim()   || '',
+    sala:      document.getElementById('art-sala')?.value?.trim()    || '',
+    fecha:     document.getElementById('art-fecha')?.value?.trim()   || '',
+    edicionId: document.getElementById('art-edicion')?.value || '',
+    orden:     parseInt(document.getElementById('art-orden')?.value) || 99,
+    cuerpo, bloques: bloquesValidos,
+    imagenUrl: primeraImagen?.url?.trim() || '',
+    estado,
+  };
 }
 
 function renderBloquesEditor() {
   const cont = document.getElementById('bloques-editor');
   if (!cont) return;
   if (!bloques.length) {
-    cont.innerHTML = '<div class="bloques-empty">Todavía no hay contenido.<br>Usá los botones de abajo para sumar texto, fotos o videos.</div>';
+    cont.innerHTML = '<div class="bloques-empty">Todavía no hay contenido.<br>Usá los botones de abajo para agregar texto, fotos o videos.</div>';
     return;
   }
-  cont.innerHTML = bloques.map((b,i) => htmlBloque(b, i, bloques.length)).join('');
+  cont.innerHTML = bloques.map((b,i)=>htmlBloque(b,i,bloques.length)).join('');
+  // Configurar pegado limpio en todos los editores ricos
+  cont.querySelectorAll('.rte-body').forEach(el => setupPegadoLimpio(el));
+  // Actualizar preview y contadores
+  actualizarPreviewEditor();
+  actualizarStatusBar();
 }
 
 // ═══ MODAL ARTÍCULO (editar / revisar) ═══════════════════════
@@ -918,131 +1795,162 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
 
   document.getElementById('modal-art-titulo').textContent = modoRevision ? '📋 Revisión de artículo' : (art ? 'Editar artículo' : 'Nuevo artículo');
 
+  // El modal ocupa casi toda la pantalla para tener espacio
+  document.getElementById('modal-art').querySelector('.mbox').style.maxWidth = '1100px';
+  document.getElementById('modal-art').querySelector('.mbox').style.maxHeight = '96vh';
+  document.getElementById('modal-art').querySelector('.mbox').style.height = '96vh';
+  document.getElementById('modal-art').querySelector('.mbox').style.display = 'flex';
+  document.getElementById('modal-art').querySelector('.mbox').style.flexDirection = 'column';
+
+  body.style.padding = '0';
+  body.style.flex = '1';
+  body.style.overflow = 'hidden';
+  body.style.display = 'flex';
+  body.style.flexDirection = 'column';
+
   body.innerHTML = `
     ${modoRevision ? `
-      <div style="background:var(--warn)18;border:1px solid var(--warn)44;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--warn)">
+      <div style="background:var(--warn)18;border-bottom:1px solid var(--warn)44;padding:10px 16px;font-size:12px;color:var(--warn);flex-shrink:0">
         ⏳ Enviado por <strong>${art?.docenteNombre||art?.docenteEmail||'—'}</strong> ${art?.creadoEn ? '· ' + tiempoDesde(art.creadoEn) : ''}
-        <br>Revisá, editá si es necesario y luego publicá o asignalo a una edición.
+        — Revisá, editá si necesario y luego publicá.
       </div>
     ` : ''}
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="grid3">
+
+    <!-- LAYOUT: editor izq, preview der -->
+    <div style="flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden">
+
+      <!-- COLUMNA EDITOR -->
+      <div class="editor-col" style="padding:18px 20px;display:flex;flex-direction:column;gap:13px">
+
+        <!-- Metadatos -->
+        <div class="grid3">
+          <div class="field">
+            <label class="lbl">Nivel</label>
+            <select class="ai" id="art-nivel" onchange="actualizarPreviewEditor()">
+              ${Object.entries(NIVELES).map(([k,v])=>`<option value="${k}" ${art?.nivel===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">Tipo</label>
+            <select class="ai" id="art-tipo">
+              ${['noticia','galeria','proyecto','evento','comunicado','aviso'].map(t=>`<option value="${t}" ${art?.tipo===t?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label class="lbl">Orden en edición</label>
+            <input class="ai" type="number" id="art-orden" value="${art?.orden||''}" placeholder="1, 2, 3…">
+          </div>
+        </div>
+
         <div class="field">
-          <label class="lbl">Nivel</label>
-          <select class="ai" id="art-nivel">
-            ${Object.entries(NIVELES).map(([k,v]) => `<option value="${k}" ${art?.nivel===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
-          </select>
+          <label class="lbl">Título</label>
+          <input class="ai" id="art-titulo" value="${esc(art?.titulo||'')}" placeholder="Título del artículo…" oninput="actualizarPreviewEditor()">
         </div>
+
         <div class="field">
-          <label class="lbl">Tipo</label>
-          <select class="ai" id="art-tipo">
-            ${['noticia','galeria','proyecto','evento','comunicado','aviso'].map(t => `<option value="${t}" ${art?.tipo===t?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
-          </select>
+          <label class="lbl">Bajada / Resumen</label>
+          <textarea class="ai" id="art-bajada" rows="2" placeholder="Descripción breve que aparece debajo del título…" oninput="actualizarPreviewEditor()">${esc(art?.bajada||'')}</textarea>
         </div>
-        <div class="field">
-          <label class="lbl">Orden en edición</label>
-          <input class="ai" type="number" id="art-orden" value="${art?.orden||''}" placeholder="1, 2, 3…">
+
+        <!-- Contenido -->
+        <div class="field" style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
+            <label class="lbl">Contenido</label>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="abrirModalPlantillas()" style="font-size:9.5px">📄 Usar plantilla</button>
+          </div>
+          <div class="bloques-list" id="bloques-editor"></div>
+          <div class="bloque-add-row" style="margin-top:8px">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('texto')">＋ Texto</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('imagen')">＋ Foto</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('video')">＋ Video</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('separador')">— Separador</button>
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label class="lbl">Título</label>
-        <input class="ai" id="art-titulo" value="${esc(art?.titulo||'')}" placeholder="Título del artículo…">
-      </div>
-      <div class="field">
-        <label class="lbl">Bajada / Resumen</label>
-        <textarea class="ai" id="art-bajada" rows="2" placeholder="Descripción breve que aparece debajo del título…">${esc(art?.bajada||'')}</textarea>
-      </div>
-      <div class="field">
-        <label class="lbl">Contenido completo</label>
-        <span style="font-size:11px;color:var(--muted);margin-top:-2px">Combiná párrafos, fotos y videos, y reordenalos con ↑ ↓.</span>
-        <div class="bloques-list" id="bloques-editor"></div>
-        <div class="bloque-add-row">
-          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('texto')">＋ Texto</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('imagen')">＋ Foto</button>
-          <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('video')">＋ Video</button>
+
+        <div class="grid2">
+          <div class="field"><label class="lbl">Autor</label><input class="ai" id="art-autor" value="${esc(art?.autor||'')}" placeholder="Nombre del autor"></div>
+          <div class="field"><label class="lbl">Sala / Grado</label><input class="ai" id="art-sala" value="${esc(art?.sala||'')}" placeholder="Ej: 3.° Grado A"></div>
         </div>
-      </div>
-      <div class="grid2">
-        <div class="field">
-          <label class="lbl">Autor</label>
-          <input class="ai" id="art-autor" value="${esc(art?.autor||'')}" placeholder="Nombre del autor">
+
+        <div class="grid2">
+          <div class="field"><label class="lbl">Fecha</label><input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026"></div>
+          <div class="field">
+            <label class="lbl">Edición</label>
+            <select class="ai" id="art-edicion">
+              <option value="">Sin asignar</option>
+              ${edOpcs}
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label class="lbl">Sala / Grado</label>
-          <input class="ai" id="art-sala" value="${esc(art?.sala||'')}" placeholder="Ej: 3.° Grado A">
-        </div>
+
       </div>
-      <div class="field">
-        <label class="lbl">Fecha</label>
-        <input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026">
-      </div>
-      <div class="field">
-        <label class="lbl">Edición a la que pertenece</label>
-        <select class="ai" id="art-edicion">
-          <option value="">Sin asignar</option>
-          ${edOpcs}
-        </select>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--rule)">
-      <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap">
-        <div style="display:flex;gap:8px">
-          ${modoRevision ? `
-            <button class="btn btn-danger btn-sm" onclick="rechazarArticulo('${art?.id}')">Rechazar</button>
-          ` : `
-            <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>
-          `}
+
+      <!-- COLUMNA PREVIEW -->
+      <div class="preview-col">
+        <div class="preview-col-header">
+          <span>Vista previa</span>
+          <span style="font-size:9px">Se actualiza al escribir</span>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost btn-sm" onclick="guardarArticulo('${art?.id||''}','borrador')">Guardar borrador</button>
-          <button class="btn btn-gold btn-sm" onclick="guardarArticulo('${art?.id||''}','publicado')">✅ Guardar y publicar</button>
+        <div class="preview-iframe-wrap">
+          <div class="preview-page" id="preview-live">
+            <div style="color:#aaa;font-style:italic;font-size:12px;text-align:center;padding:20px">Empezá a escribir para ver la previsualización…</div>
+          </div>
         </div>
+        <div class="prev-word-count" id="prev-wc">0 palabras · 0 min lectura</div>
+      </div>
+
+    </div>
+
+    <!-- STATUS BAR + ACCIONES -->
+    ${htmlStatusBar(art?.id||'')}
+
+    <div style="padding:12px 18px;border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;flex-shrink:0">
+      <div style="display:flex;gap:8px">
+        ${modoRevision ? `
+          <button class="btn btn-danger btn-sm" onclick="rechazarArticulo('${art?.id}')">Rechazar</button>
+        ` : `
+          <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>
+        `}
+        <button class="btn btn-ghost btn-sm" onclick="autoguardar()" id="btn-autoguardar">💾 Guardar borrador</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-gold btn-sm" onclick="guardarArticulo('${art?.id||''}','publicado')">✅ Guardar y publicar</button>
       </div>
     </div>
   `;
 
   renderBloquesEditor();
   abrirModal('modal-art');
+  // Iniciar autoguardado
+  artIdActual = art?.id || null;
+  cambiosPendientes = false;
+  iniciarAutoguardado(art?.id || null);
 }
 
 window.guardarArticulo = async function(artId, estado) {
-  const bloquesValidos = bloques.filter(b =>
-    (b.tipo === 'texto'  && b.texto && b.texto.trim()) ||
-    (b.tipo !== 'texto'  && b.url   && b.url.trim())
-  );
-  const cuerpo = bloquesValidos.filter(b => b.tipo==='texto').map(b => b.texto.trim()).join('\n\n');
-  const primeraImagen = bloquesValidos.find(b => b.tipo === 'imagen');
-
-  const data = {
-    nivel:      document.getElementById('art-nivel').value,
-    tipo:       document.getElementById('art-tipo').value,
-    titulo:     document.getElementById('art-titulo').value.trim(),
-    bajada:     document.getElementById('art-bajada').value.trim(),
-    cuerpo,
-    bloques:    bloquesValidos,
-    autor:      document.getElementById('art-autor').value.trim(),
-    sala:       document.getElementById('art-sala').value.trim(),
-    fecha:      document.getElementById('art-fecha').value.trim(),
-    imagenUrl:  primeraImagen ? primeraImagen.url.trim() : '',
-    edicionId:  document.getElementById('art-edicion').value,
-    orden:      parseInt(document.getElementById('art-orden').value) || 99,
-    estado,
-    actualizadoEn: serverTimestamp(),
-  };
+  sincronizarBloques();
+  const data = recopilarDatosArticulo(estado);
   if (!data.titulo) { toast('El título es obligatorio', 'err'); return; }
   try {
     if (artId) {
-      await updateDoc(doc(db,'articulos',artId), data);
-      toast(estado === 'publicado' ? 'Artículo publicado ✓' : 'Artículo guardado ✓');
+      // Guardar versión antes de actualizar
+      if (estado === 'publicado') await guardarVersion(artId, data);
+      await updateDoc(doc(db,'articulos',artId), {...data, actualizadoEn:serverTimestamp()});
+      toast(estado==='publicado'?'Artículo publicado ✓':'Artículo guardado ✓');
     } else {
       data.creadoEn = serverTimestamp();
-      await addDoc(collection(db,'articulos'), data);
+      const ref = await addDoc(collection(db,'articulos'), data);
+      artIdActual = ref.id;
       toast('Artículo creado ✓');
     }
+    cambiosPendientes = false;
+    ultimoGuardado = new Date();
+    setAutosaveDot('saved');
     cerrarModal('modal-art');
     cargarNotifCount();
-    if (currentTab === 'revision') renderRevision();
-    else if (currentTab === 'articulos') renderArticulos();
-  } catch(e) { toast('Error: ' + e.message, 'err'); }
+    if (currentTab==='revision') renderRevision();
+    else if (currentTab==='articulos') renderArticulos();
+  } catch(e) { toast('Error: '+e.message,'err'); }
 };
 
 window.rechazarArticulo = async function(artId) {
