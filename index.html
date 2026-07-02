@@ -284,9 +284,17 @@ body { font-family: 'Lato', sans-serif; background: #0E1628; color: var(--ink); 
   .art-destacado .art-body { padding: 18px 16px 20px; }
   .modal-body { padding: 20px 18px 28px; }
 }
+
+.preview-banner{
+  position:sticky;top:0;z-index:200;background:#C89A4C;color:#1A1A2E;
+  font-family:'Lato',sans-serif;font-weight:900;font-size:12.5px;letter-spacing:.5px;
+  text-align:center;padding:10px 14px;text-transform:uppercase;
+}
 </style>
 </head>
 <body>
+
+<div id="preview-banner-slot"></div>
 
 <!-- Loading -->
 <div id="loading">
@@ -381,10 +389,33 @@ let todasEdiciones = [];
 let edicionActual = null;
 let articulosActuales = [];
 let filtroNivel = 'todos';
+let modoPreview = false;
 
 // ─── CARGA INICIAL ───────────────────────────────────────────
 async function init() {
   try {
+    const params = new URLSearchParams(location.search);
+    const previewId = params.get('previewEdicion');
+
+    if (previewId) {
+      // MODO VISTA PREVIA: usado desde el admin para ver una edición
+      // aún no publicada, tal cual la verían las familias.
+      const sn = await getDoc(doc(db, 'ediciones', previewId));
+      if (!sn.exists()) {
+        ocultarLoading();
+        document.getElementById('articulos-grid').innerHTML =
+          '<div class="empty-state"><p>Esa edición no existe.</p></div>';
+        return;
+      }
+      modoPreview = true;
+      todasEdiciones = [{ id: sn.id, ...sn.data() }];
+      mostrarBannerPreview();
+      renderEdicionesNav();
+      await cargarEdicion(todasEdiciones[0]);
+      ocultarLoading();
+      return;
+    }
+
     // Cargar todas las ediciones publicadas
     const snEdiciones = await getDocs(
       query(collection(db, 'ediciones'), orderBy('fechaInicio', 'desc'))
@@ -664,6 +695,11 @@ function driveUrl(url) {
 }
 
 function esc(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+function mostrarBannerPreview() {
+  document.getElementById('preview-banner-slot').innerHTML =
+    '<div class="preview-banner">👁 Vista previa — esta edición todavía NO está publicada. Las familias no la ven así.</div>';
+}
 
 // ─── CONTENIDO COMPLETO (bloques de texto / foto / video intercalados) ───
 function renderContenidoCompleto(art) {
