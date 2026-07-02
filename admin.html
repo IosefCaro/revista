@@ -235,6 +235,7 @@ textarea.ai{resize:vertical;line-height:1.6}
       </button>
       <div class="nav-section">EDICIONES</div>
       <button class="nav-btn" onclick="setTab('ediciones')" id="tab-ediciones"><span>📰</span><span>Ediciones</span></button>
+      <button class="nav-btn" onclick="setTab('tapa')" id="tab-tapa"><span>🖼️</span><span>Diseñar Tapa</span></button>
       <button class="nav-btn" onclick="setTab('diagramar')" id="tab-diagramar"><span>🗞️</span><span>Diagramar</span></button>
       <button class="nav-btn" onclick="setTab('articulos')" id="tab-articulos"><span>✏️</span><span>Artículos</span></button>
       <div class="nav-section">SISTEMA</div>
@@ -376,6 +377,7 @@ window.setTab = function(tab) {
   const titles = {
     revision:  ['📋 Revisión', 'Artículos enviados por docentes — revisá, editá y publicá'],
     ediciones: ['📰 Ediciones', 'Gestión de ediciones semanales'],
+    tapa:      ['🖼️ Diseñar Tapa', 'Configurá la portada de cada edición'],
     diagramar: ['🗞️ Diagramar', 'Armá la edición, ordená las notas y previsualizá antes de publicar'],
     articulos: ['✏️ Artículos', 'Todos los artículos del sistema'],
     docentes:  ['👥 Docentes', 'Usuarios con acceso de docente'],
@@ -391,7 +393,7 @@ window.setTab = function(tab) {
   if (tab === 'articulos') {
     actionsEl.innerHTML = '<button class="btn btn-gold btn-sm" onclick="abrirModalArticulo()">+ Nuevo artículo</button>';
   }
-  const renders = { revision:renderRevision, ediciones:renderEdiciones, diagramar:renderDiagramar, articulos:renderArticulos, docentes:renderDocentes };
+  const renders = { revision:renderRevision, ediciones:renderEdiciones, tapa:renderTapa, diagramar:renderDiagramar, articulos:renderArticulos, docentes:renderDocentes };
   renders[tab]?.();
 };
 
@@ -1342,6 +1344,181 @@ window.toast = function(msg, type) {
 });
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modal-art'); cerrarModal('modal-edicion'); } });
+
+// ═══ DISEÑAR TAPA ════════════════════════════════════════════
+async function renderTapa() {
+  const pg = document.getElementById('page-content');
+  pg.innerHTML = '<div class="loading-spin"></div>';
+
+  // Cargar ediciones
+  const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
+  const ediciones = snEds.docs.map(d=>({id:d.id,...d.data()}));
+  if (!ediciones.length) {
+    pg.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Creá primero una edición en el tab Ediciones.</div>';
+    return;
+  }
+
+  const firstEd = ediciones[0];
+  pg.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;max-width:900px">
+
+      <!-- FORM -->
+      <div>
+        <div style="margin-bottom:16px">
+          <label class="lbl">Edición a configurar</label>
+          <select class="ai" id="tapa-ed-select" onchange="cargarDatosTapa(this.value)" style="margin-top:4px">
+            ${ediciones.map(e=>`<option value="${e.id}">${e.numero?'Ed. '+e.numero+' — ':''}${e.titulo||'Sin título'}</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="card cp" style="margin-bottom:14px">
+          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Imagen de portada</div>
+          <div class="field">
+            <label class="lbl">URL de imagen (Google Drive u otro)</label>
+            <input class="ai" id="tapa-img" placeholder="https://drive.google.com/file/d/…/view">
+            <span style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">
+              Usá Google Drive: subí la imagen → Compartir → "Cualquier persona con el enlace" → copiá el link.
+            </span>
+          </div>
+          <div style="margin-top:10px">
+            <img id="tapa-img-preview" src="" alt="" style="display:none;width:100%;max-height:180px;object-fit:cover;border-radius:6px;margin-top:8px">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="previewTapaImg()" style="margin-top:10px">👁 Previsualizar imagen</button>
+        </div>
+
+        <div class="card cp" style="margin-bottom:14px">
+          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Textos de la portada</div>
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div class="field"><label class="lbl">Título principal</label><input class="ai" id="tapa-titulo" placeholder="Ej: Revista Institucional Iosef Caro"></div>
+            <div class="field"><label class="lbl">Subtítulo / Bajada</label><textarea class="ai" id="tapa-subtitulo" rows="2" placeholder="Ej: Semana de integración y festejo del Día del Maestro"></textarea></div>
+            <div class="grid2">
+              <div class="field"><label class="lbl">Mes</label><input class="ai" id="tapa-mes" placeholder="JULIO"></div>
+              <div class="field"><label class="lbl">Año</label><input class="ai" id="tapa-anio" placeholder="2026"></div>
+            </div>
+            <div class="field"><label class="lbl">Institución (línea pequeña)</label><input class="ai" id="tapa-inst" placeholder="Colegio Rabino Iosef Caro" value="Colegio Rabino Iosef Caro"></div>
+            <div class="field"><label class="lbl">Texto en hebreo (esquina)</label><input class="ai" id="tapa-hebreo" placeholder="בס״ד" value="בס״ד"></div>
+            <div class="field"><label class="lbl">URL del logo (opcional)</label><input class="ai" id="tapa-logo" placeholder="https://…" value="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-gold" onclick="guardarTapa()">💾 Guardar tapa</button>
+          <button class="btn btn-ghost" onclick="previsualizarRevista()">👁 Ver revista</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div>
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Previsualización</div>
+        <div id="tapa-preview-box" style="
+          background:linear-gradient(160deg,#0E1628 0%,#1A2848 60%,#1E3060 100%);
+          border-radius:8px;overflow:hidden;position:relative;height:460px;
+          border:1px solid rgba(201,168,76,.2);box-shadow:0 20px 50px rgba(0,0,0,.4);
+        ">
+          <img id="tapa-prev-img" src="" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,22,40,.1) 0%,rgba(14,22,40,.5) 40%,rgba(14,22,40,.96) 100%)"></div>
+          <div style="position:absolute;top:-10px;right:-10px;font-size:220px;line-height:.8;font-family:'Playfair Display',serif;color:rgba(201,168,76,.05);pointer-events:none" id="tapa-prev-hebreo">בס״ד</div>
+          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 20px 22px;color:#fff">
+            <div style="display:flex;align-items:center;gap:8px;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid rgba(201,168,76,.25)">
+              <img id="tapa-prev-logo" src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="" style="height:18px;opacity:.85" onerror="this.style.display='none'">
+              <span id="tapa-prev-inst" style="font-family:'Lato',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(201,168,76,.7);text-transform:uppercase">Colegio Rabino Iosef Caro</span>
+            </div>
+            <div id="tapa-prev-badge" style="font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#C9A84C;margin-bottom:6px">Edición — JULIO 2026</div>
+            <div id="tapa-prev-titulo" style="font-family:'Playfair Display',serif;font-weight:900;font-size:22px;line-height:1.04;margin-bottom:6px">Revista Institucional</div>
+            <div id="tapa-prev-subtitulo" style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5">"Formamos Iehudim íntegros para el mañana"</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center">La previsualización se actualiza al escribir</div>
+      </div>
+    </div>
+  `;
+
+  // Cargar datos de la primera edición
+  cargarDatosTapa(firstEd.id);
+
+  // Live preview al escribir
+  ['tapa-titulo','tapa-subtitulo','tapa-mes','tapa-anio','tapa-inst','tapa-hebreo','tapa-logo'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', actualizarPreviewTapa);
+  });
+}
+
+window.cargarDatosTapa = async function(edId) {
+  const sn = await getDoc(doc(db,'ediciones',edId));
+  if (!sn.exists()) return;
+  const ed = sn.data();
+  const set = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
+  set('tapa-img',      ed.portadaImagenUrl||'');
+  set('tapa-titulo',   ed.titulo||'');
+  set('tapa-subtitulo',ed.subtitulo||'');
+  set('tapa-mes',      ed.mes||'');
+  set('tapa-anio',     ed.anio||'');
+  set('tapa-inst',     ed.institucion||'Colegio Rabino Iosef Caro');
+  set('tapa-hebreo',   ed.hebreo||'בס״ד');
+  set('tapa-logo',     ed.logoUrl||'https://i.ibb.co/hF7Sqzw5/Logo-blanco.png');
+  actualizarPreviewTapa();
+};
+
+function driveUrlAdmin(url) {
+  if (!url) return '';
+  const m = url.match(/\/d\/([^/?#]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  return url;
+}
+
+window.previewTapaImg = function() {
+  const url = driveUrlAdmin(document.getElementById('tapa-img').value.trim());
+  const prev = document.getElementById('tapa-img-preview');
+  if (!url) { prev.style.display='none'; return; }
+  prev.src = url; prev.style.display='block';
+  // también actualizar preview lateral
+  actualizarPreviewTapa();
+};
+
+function actualizarPreviewTapa() {
+  const g = id => document.getElementById(id)?.value||'';
+  const imgUrl = driveUrlAdmin(g('tapa-img'));
+  const prevImg = document.getElementById('tapa-prev-img');
+  if (imgUrl) { prevImg.src=imgUrl; prevImg.style.display='block'; }
+  else prevImg.style.display='none';
+
+  const logo = g('tapa-logo');
+  const logoEl = document.getElementById('tapa-prev-logo');
+  if (logoEl) { logoEl.src=logo; logoEl.onerror=()=>logoEl.style.display='none'; }
+
+  const setT=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
+  setT('tapa-prev-titulo',   g('tapa-titulo')||'Revista Institucional');
+  setT('tapa-prev-subtitulo',g('tapa-subtitulo')||'"Formamos Iehudim íntegros para el mañana"');
+  setT('tapa-prev-inst',     g('tapa-inst')||'Colegio Rabino Iosef Caro');
+  setT('tapa-prev-hebreo',   g('tapa-hebreo')||'בס״ד');
+  const mes=g('tapa-mes'); const anio=g('tapa-anio');
+  setT('tapa-prev-badge', `Edición ${document.getElementById('tapa-ed-select')?.selectedOptions[0]?.textContent?.split('—')[0]?.trim()||''}${mes?' · '+mes:''} ${anio}`);
+}
+
+window.guardarTapa = async function() {
+  const edId = document.getElementById('tapa-ed-select')?.value;
+  if (!edId) { toast('Seleccioná una edición','err'); return; }
+  const g = id => document.getElementById(id)?.value?.trim()||'';
+  try {
+    await updateDoc(doc(db,'ediciones',edId), {
+      portadaImagenUrl: g('tapa-img'),
+      titulo:           g('tapa-titulo'),
+      subtitulo:        g('tapa-subtitulo'),
+      mes:              g('tapa-mes'),
+      anio:             g('tapa-anio'),
+      institucion:      g('tapa-inst'),
+      hebreo:           g('tapa-hebreo'),
+      logoUrl:          g('tapa-logo'),
+      actualizadoEn:    serverTimestamp(),
+    });
+    toast('Tapa guardada ✓');
+  } catch(e) { toast('Error: '+e.message,'err'); }
+};
+
+window.previsualizarRevista = function() {
+  const edId = document.getElementById('tapa-ed-select')?.value;
+  if (!edId) return;
+  window.open(`index.html?previewEdicion=${edId}`,'_blank');
+};
 </script>
 </body>
 </html>
