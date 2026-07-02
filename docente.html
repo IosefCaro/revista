@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Docente – Revista Iosef Caro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+
+:root {
+  --bg:#0E1628;--navy:#1A2848;--card:#1E3060;
+  --gold:#C9A84C;--gold-pale:#E8D5A0;
+  --white:#fff;--ink:#F0EDE6;--muted:#8888AA;
+  --rule:#2A3A6A;--ok:#3AB07A;--err:#C84C4C;--warn:#C89A4C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:'Lato',sans-serif;background:var(--bg);color:var(--ink)}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--rule);border-radius:4px}
+
+.wrap{max-width:680px;margin:0 auto;padding:24px 16px 60px}
+
+/* HEADER */
+.portal-header{
+  background:linear-gradient(160deg,var(--bg) 0%,var(--navy) 70%);
+  padding:24px 20px 28px;border-bottom:1px solid rgba(201,168,76,.2);
+  text-align:center;margin-bottom:0;
+}
+.portal-header .star{font-size:32px;color:var(--gold);margin-bottom:8px}
+.portal-header h1{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--white)}
+.portal-header p{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+
+/* LOGIN */
+#login-section{padding:32px 0}
+.login-box{background:var(--navy);border:1px solid var(--rule);border-radius:12px;padding:28px;max-width:400px;margin:0 auto}
+
+/* SECCIONES */
+#app-section{display:none}
+.section-title{
+  font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);
+  margin:28px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--rule);
+}
+.section-sub{font-size:12px;color:var(--muted);margin-top:-10px;margin-bottom:16px}
+
+/* FORM */
+.form-card{background:var(--navy);border:1px solid var(--rule);border-radius:10px;padding:22px 20px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.lbl{font-size:8.5px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.lbl-required::after{content:' *';color:var(--gold)}
+.ai{
+  width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--rule);
+  border-radius:6px;color:var(--ink);font-size:14px;outline:none;
+  transition:border-color .15s;font-family:inherit;
+}
+.ai:focus{border-color:var(--gold)88}
+textarea.ai{resize:vertical;line-height:1.65}
+.ai-help{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.5}
+
+/* BOTONES */
+.btn{display:inline-flex;align-items:center;gap:6px;border:none;cursor:pointer;border-radius:4px;font-weight:900;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:10px 22px;transition:all .15s;font-family:inherit}
+.btn-gold{background:var(--gold);color:var(--bg)}.btn-gold:hover{background:var(--gold-pale)}
+.btn-ghost{background:none;border:1px solid var(--rule);color:var(--muted)}.btn-ghost:hover{border-color:var(--gold)55;color:var(--gold)}
+.btn-full{width:100%;justify-content:center}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ARTÍCULOS ENVIADOS */
+.art-item{
+  background:var(--card);border:1px solid var(--rule);border-radius:8px;
+  padding:14px 16px;margin-bottom:8px;
+}
+.art-item-titulo{font-size:14px;font-weight:700;color:var(--white);margin-bottom:4px}
+.art-item-meta{font-size:11px;color:var(--muted)}
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:20px;font-size:9.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.bdg-pub{background:var(--ok)22;color:var(--ok);border:1px solid var(--ok)44}
+.bdg-rev{background:var(--warn)22;color:var(--warn);border:1px solid var(--warn)44}
+.bdg-bor{background:var(--rule)33;color:var(--muted);border:1px solid var(--rule)}
+.bdg-rej{background:var(--err)22;color:var(--err);border:1px solid var(--err)44}
+
+/* LOADING */
+.spin{width:28px;height:28px;border:2px solid var(--rule);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:11px 22px;border-radius:24px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.4);animation:tIn .2s ease;display:none}
+@keyframes tIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+.exito-box{background:var(--ok)18;border:1px solid var(--ok)44;border-radius:10px;padding:20px;text-align:center;margin-top:16px;display:none}
+.exito-box h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--ok);margin-bottom:6px}
+.exito-box p{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="portal-header">
+  <div class="star">✡</div>
+  <h1>Portal Docente</h1>
+  <p>Revista Institucional · Colegio Iosef Caro</p>
+</div>
+
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <div id="login-section">
+    <div class="login-box">
+      <div style="margin-bottom:20px;font-size:13px;color:var(--muted);line-height:1.6;text-align:center">
+        Ingresá con tu cuenta institucional para enviar artículos a la revista.
+      </div>
+      <div class="field">
+        <label class="lbl">Email institucional</label>
+        <input class="ai" type="email" id="login-email" placeholder="tu@iosefcaro.edu.ar" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="field">
+        <label class="lbl">Contraseña</label>
+        <input class="ai" type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="login-err" style="font-size:12px;color:var(--err);display:none;padding:8px 12px;background:var(--err)22;border-radius:6px;margin-bottom:12px"></div>
+      <button class="btn btn-gold btn-full" onclick="doLogin()" id="login-btn">Ingresar →</button>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="app-section">
+    <!-- Bienvenida -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 0 20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:13px;color:var(--muted)">Bienvenida/o,</div>
+        <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--white)" id="welcome-name">—</div>
+      </div>
+      <button class="btn btn-ghost" onclick="doLogout()" style="font-size:10px">Salir</button>
+    </div>
+
+    <!-- FORM NUEVO ARTÍCULO -->
+    <div class="section-title">Enviar nuevo artículo</div>
+    <p class="section-sub">Una vez enviado, el administrador lo revisará y publicará.</p>
+
+    <div class="form-card">
+      <div class="grid2">
+        <div class="field">
+          <label class="lbl lbl-required">Nivel educativo</label>
+          <select class="ai" id="art-nivel">
+            <option value="institucional">■ Institucional</option>
+            <option value="inicial">✦ Nivel Inicial</option>
+            <option value="primaria">◆ Nivel Primario</option>
+            <option value="secundaria">▲ Nivel Secundario</option>
+            <option value="reshit">✡ Reshit</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl lbl-required">Tipo de contenido</label>
+          <select class="ai" id="art-tipo">
+            <option value="noticia">Noticia</option>
+            <option value="evento">Evento / Acto</option>
+            <option value="proyecto">Proyecto pedagógico</option>
+            <option value="galeria">Galería de fotos</option>
+            <option value="comunicado">Comunicado</option>
+            <option value="aviso">Aviso</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl lbl-required">Título del artículo</label>
+        <input class="ai" id="art-titulo" placeholder="Ej: Semana de la Naturaleza en el Huerto Escolar">
+      </div>
+
+      <div class="field">
+        <label class="lbl">Bajada (frase de presentación)</label>
+        <textarea class="ai" id="art-bajada" rows="2" placeholder="Una frase que resume el artículo y atrae la atención de las familias…"></textarea>
+        <span class="ai-help">Aparece debajo del título, en itálica. Opcional pero recomendado.</span>
+      </div>
+
+      <div class="field">
+        <label class="lbl lbl-required">Contenido</label>
+        <textarea class="ai" id="art-cuerpo" rows="7" placeholder="Escribí acá el texto completo. Podés dejar una línea en blanco entre párrafos."></textarea>
+        <span class="ai-help">Contá qué pasó, cuándo, quiénes participaron y por qué fue importante.</span>
+      </div>
+
+      <div class="grid2">
+        <div class="field">
+          <label class="lbl">Tu nombre completo</label>
+          <input class="ai" id="art-autor" placeholder="Ej: Maestra Daniela R.">
+        </div>
+        <div class="field">
+          <label class="lbl">Sala / Grado / Grupo</label>
+          <input class="ai" id="art-sala" placeholder="Ej: Sala Azul · 3.° Grado">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="lbl">Imagen (link de Google Drive)</label>
+        <input class="ai" id="art-imagen" placeholder="https://drive.google.com/file/d/…/view?usp=sharing">
+        <span class="ai-help">Subí la foto a tu Google Drive, hacé clic derecho → "Obtener enlace" → "Cualquier persona con el enlace" → copiá el link acá.</span>
+      </div>
+
+      <div style="padding:12px 14px;background:var(--bg);border-radius:8px;border:1px solid var(--rule);margin-bottom:14px">
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px">📌 Sobre las imágenes</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.65">
+          1. Abrí <strong style="color:var(--ink)">drive.google.com</strong><br>
+          2. Subí la foto<br>
+          3. Clic derecho sobre la foto → <strong style="color:var(--ink)">Compartir</strong><br>
+          4. Cambiá a <strong style="color:var(--ink)">"Cualquier persona con el enlace"</strong><br>
+          5. Copiá el link y pegalo arriba
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-full" onclick="enviarArticulo()" id="btn-enviar">
+        Enviar artículo para revisión →
+      </button>
+
+      <div class="exito-box" id="exito-box">
+        <h3>✅ ¡Artículo enviado!</h3>
+        <p>El equipo editorial lo revisará y te avisarán cuando esté publicado.<br>Podés ver el estado abajo en "Mis artículos".</p>
+        <button class="btn btn-ghost" onclick="resetForm()" style="margin-top:14px">Enviar otro</button>
+      </div>
+    </div>
+
+    <!-- MIS ARTÍCULOS -->
+    <div class="section-title" style="margin-top:36px">Mis artículos enviados</div>
+    <div id="mis-arts"><div class="spin"></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, query,
+  where, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
+  authDomain: "revista-1ac1c.firebaseapp.com",
+  projectId: "revista-1ac1c",
+  storageBucket: "revista-1ac1c.firebasestorage.app",
+  messagingSenderId: "137545616566",
+  appId: "1:137545616566:web:f74736d93682e2727dea17"
+};
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('app-section').style.display = 'block';
+    const nombre = user.email.split('@')[0].replace(/\./g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    document.getElementById('welcome-name').textContent = nombre;
+    document.getElementById('art-autor').value = nombre;
+    cargarMisArticulos();
+  } else {
+    currentUser = null;
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('app-section').style.display = 'none';
+  }
+});
+
+window.doLogin = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  if (!email || !pass) { errEl.textContent='Completá email y contraseña'; errEl.style.display='block'; return; }
+  btn.textContent='Ingresando…'; btn.disabled=true; errEl.style.display='none';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    const msgs={'auth/invalid-credential':'Email o contraseña incorrectos.','auth/too-many-requests':'Demasiados intentos. Esperá.'};
+    errEl.textContent=msgs[e.code]||'Error: '+e.message; errEl.style.display='block';
+    btn.textContent='Ingresar →'; btn.disabled=false;
+  }
+};
+
+window.doLogout = async function() { await signOut(auth); };
+
+window.enviarArticulo = async function() {
+  const titulo = document.getElementById('art-titulo').value.trim();
+  const cuerpo = document.getElementById('art-cuerpo').value.trim();
+  if (!titulo) { toast('El título es obligatorio', 'err'); return; }
+  if (!cuerpo) { toast('El contenido es obligatorio', 'err'); return; }
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+
+  try {
+    await addDoc(collection(db,'articulos'), {
+      nivel:          document.getElementById('art-nivel').value,
+      tipo:           document.getElementById('art-tipo').value,
+      titulo,
+      bajada:         document.getElementById('art-bajada').value.trim(),
+      cuerpo,
+      autor:          document.getElementById('art-autor').value.trim(),
+      sala:           document.getElementById('art-sala').value.trim(),
+      imagenUrl:      document.getElementById('art-imagen').value.trim(),
+      docenteEmail:   currentUser.email,
+      docenteNombre:  document.getElementById('art-autor').value.trim() || currentUser.email,
+      estado:         'revision',
+      edicionId:      '',
+      orden:          99,
+      fecha:          new Date().toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}),
+      creadoEn:       serverTimestamp(),
+      actualizadoEn:  serverTimestamp(),
+    });
+    document.getElementById('exito-box').style.display = 'block';
+    cargarMisArticulos();
+  } catch(e) {
+    toast('Error al enviar: ' + e.message, 'err');
+  } finally {
+    btn.disabled=false; btn.textContent='Enviar artículo para revisión →';
+  }
+};
+
+window.resetForm = function() {
+  ['art-titulo','art-bajada','art-cuerpo','art-sala','art-imagen'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('art-nivel').value='institucional';
+  document.getElementById('art-tipo').value='noticia';
+  document.getElementById('exito-box').style.display='none';
+};
+
+async function cargarMisArticulos() {
+  const cont = document.getElementById('mis-arts');
+  cont.innerHTML = '<div class="spin"></div>';
+  try {
+    const sn = await getDocs(
+      query(collection(db,'articulos'), where('docenteEmail','==',currentUser.email), orderBy('creadoEn','desc'))
+    );
+    const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+    if (!arts.length) {
+      cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No enviaste artículos aún.</div>';
+      return;
+    }
+    const estadoLabel = { publicado:'✅ Publicado', revision:'⏳ En revisión', borrador:'📝 Borrador', rechazado:'❌ Rechazado' };
+    const bdgClass    = { publicado:'bdg-pub', revision:'bdg-rev', borrador:'bdg-bor', rechazado:'bdg-rej' };
+    cont.innerHTML = arts.map(a => `
+      <div class="art-item">
+        <div class="art-item-titulo">${a.titulo||'Sin título'}</div>
+        <div class="art-item-meta" style="display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap">
+          <span class="bdg ${bdgClass[a.estado]||'bdg-bor'}">${estadoLabel[a.estado]||a.estado}</span>
+          <span>${a.tipo||''}</span>
+          ${a.sala?`<span>· ${a.sala}</span>`:''}
+          ${a.creadoEn?`<span style="color:var(--muted)">Enviado: ${formatFecha(a.creadoEn)}</span>`:''}
+        </div>
+        ${a.estado==='rechazado'?`<div style="margin-top:8px;font-size:11px;color:var(--err);background:var(--err)11;border-radius:4px;padding:6px 10px">El administrador revisó este artículo y no fue publicado. Podés modificarlo y volver a enviar.</div>`:''}
+      </div>
+    `).join('');
+  } catch(e) {
+    cont.innerHTML = `<div style="color:var(--err);font-size:12px;padding:16px">Error: ${e.message}</div>`;
+  }
+}
+
+function formatFecha(ts) {
+  try { const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'}); } catch { return ''; }
+}
+
+let toastTimer;
+window.toast = function(msg,type) {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.style.background=type==='err'?'#C84C4C':'#3AB07A';
+  el.style.color='#fff'; el.style.display='block';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.display='none',3200);
+};
+</script>
+</body>
+</html>
