@@ -185,6 +185,44 @@ body { font-family: 'Lato', sans-serif; background: #0E1628; color: var(--ink); 
   color: var(--ink); margin-bottom: 12px;
 }
 .art-cuerpo p + p { text-indent: 1.2em; }
+
+/* BLOQUES INTERCALADOS (lectura completa) */
+.bloques-wrap { margin-bottom: 12px; }
+.bloques-wrap::after { content: ''; display: table; clear: both; }
+.bloque-imagen { margin: 18px 0; }
+.bloque-imagen.layout-full img {
+  width: 100%; border-radius: 8px; display: block;
+}
+.bloque-imagen.layout-left, .bloque-imagen.layout-right {
+  width: 46%; margin-top: 4px; margin-bottom: 14px;
+}
+.bloque-imagen.layout-left { float: left; margin-right: 20px; }
+.bloque-imagen.layout-right { float: right; margin-left: 20px; }
+.bloque-imagen.layout-left img, .bloque-imagen.layout-right img {
+  width: 100%; border-radius: 8px; display: block;
+}
+.bloque-imagen figcaption {
+  font-family: 'Lato', sans-serif; font-size: 11.5px; font-style: italic;
+  color: var(--muted); margin-top: 6px; line-height: 1.5;
+}
+.bloque-video { margin: 18px 0; clear: both; }
+.video-embed {
+  position: relative; width: 100%; padding-bottom: 56.25%; height: 0;
+  overflow: hidden; border-radius: 8px; background: #000;
+}
+.video-embed iframe, .video-embed video {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;
+}
+.video-embed video { object-fit: contain; background: #000; }
+.bloque-video figcaption {
+  font-family: 'Lato', sans-serif; font-size: 11.5px; font-style: italic;
+  color: var(--muted); margin-top: 6px; line-height: 1.5;
+}
+.video-fallback-link {
+  display: inline-block; padding: 10px 16px; border-radius: 6px;
+  background: var(--gold); color: #fff; font-family: 'Lato', sans-serif;
+  font-size: 12px; font-weight: 700; text-decoration: none;
+}
 .art-footer {
   display: flex; align-items: center; justify-content: space-between;
   padding-top: 10px; border-top: 1px solid var(--rule);
@@ -587,12 +625,17 @@ window.abrirModal = async function(artId) {
     imgEl.style.display = 'none';
   }
 
+  // Si el artículo tiene bloques (texto/foto/video intercalados), la portada del modal
+  // se oculta: las imágenes se muestran en su posición dentro del contenido.
+  const tieneBloques = Array.isArray(art.bloques) && art.bloques.length > 0;
+  if (tieneBloques) imgEl.style.display = 'none';
+
   document.getElementById('modal-body').innerHTML = `
     <div class="art-kicker" style="color:${niv.color};margin-bottom:10px">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
     <div class="art-titulo" style="font-size:clamp(22px,4vw,32px);margin-bottom:10px">${art.titulo || ''}</div>
     ${art.bajada ? `<div class="art-bajada" style="font-size:16px;margin-bottom:16px">${art.bajada}</div>` : ''}
     <hr style="border:none;border-top:1px solid var(--rule);margin:12px 0">
-    ${art.cuerpo ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo)}</div>` : ''}
+    ${renderContenidoCompleto(art)}
     <div class="art-footer" style="margin-top:16px">
       <span>${art.autor || ''} ${art.sala ? '· ' + art.sala : ''}</span>
       <span>${art.fecha || ''}</span>
@@ -618,6 +661,57 @@ function driveUrl(url) {
   const m = url.match(/\/d\/([^/]+)/);
   if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
   return url;
+}
+
+function esc(s) { return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// ─── CONTENIDO COMPLETO (bloques de texto / foto / video intercalados) ───
+function renderContenidoCompleto(art) {
+  if (Array.isArray(art.bloques) && art.bloques.length) {
+    const html = art.bloques.map(b => {
+      if (b.tipo === 'texto' && b.texto && b.texto.trim()) {
+        return `<div class="art-cuerpo">${formatCuerpo(b.texto)}</div>`;
+      }
+      if (b.tipo === 'imagen' && b.url && b.url.trim()) {
+        return renderBloqueImagen(b);
+      }
+      if (b.tipo === 'video' && b.url && b.url.trim()) {
+        return `<div class="bloque-video">${embedVideo(b.url)}${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}</div>`;
+      }
+      return '';
+    }).join('');
+    return `<div class="bloques-wrap">${html}</div>`;
+  }
+  // Artículos antiguos: solo texto plano
+  return art.cuerpo ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo)}</div>` : '';
+}
+
+function renderBloqueImagen(b) {
+  const layout = ['left', 'right'].includes(b.layout) ? b.layout : 'full';
+  return `
+    <figure class="bloque-imagen layout-${layout}">
+      <img src="${driveUrl(b.url)}" alt="${esc(b.caption || '')}" loading="lazy" onerror="this.parentElement.style.display='none'">
+      ${b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : ''}
+    </figure>`;
+}
+
+function embedVideo(url) {
+  url = (url || '').trim();
+  // YouTube
+  let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,})/);
+  if (m) return `<div class="video-embed"><iframe src="https://www.youtube.com/embed/${m[1]}" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
+  // Vimeo
+  m = url.match(/vimeo\.com\/(\d+)/);
+  if (m) return `<div class="video-embed"><iframe src="https://player.vimeo.com/video/${m[1]}" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
+  // Google Drive (archivo de video)
+  m = url.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (m) return `<div class="video-embed"><iframe src="https://drive.google.com/file/d/${m[1]}/preview" allowfullscreen loading="lazy" title="Video"></iframe></div>`;
+  // Archivo de video directo
+  if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(url)) {
+    return `<div class="video-embed"><video controls src="${url}"></video></div>`;
+  }
+  // Fallback: link externo
+  return `<a href="${url}" target="_blank" rel="noopener" class="video-fallback-link">▶ Ver video</a>`;
 }
 
 function formatCuerpo(texto, maxChars) {
