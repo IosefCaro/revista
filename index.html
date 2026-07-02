@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revista Institucional – Colegio Iosef Caro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=Lato:wght@300;400;700;900&family=EB+Garamond:ital,wght@0,400;1,400&display=swap');
+
+:root {
+  --navy: #1A2848;
+  --gold: #C9A84C;
+  --gold-pale: #F5EDD0;
+  --paper: #FAF7F1;
+  --paper-dk: #F0E8D8;
+  --ink: #1A1A2E;
+  --muted: #6B6B8A;
+  --rule: #D4C9A8;
+  --white: #fff;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Lato', sans-serif; background: #0E1628; color: var(--ink); min-height: 100vh; }
+
+/* ── LOADING ── */
+#loading {
+  position: fixed; inset: 0; background: #0E1628;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 16px; z-index: 9999; transition: opacity .4s;
+}
+#loading .spin {
+  width: 40px; height: 40px; border: 3px solid rgba(201,168,76,.2);
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+#loading p { font-family: 'Playfair Display', serif; font-style: italic; color: var(--gold); font-size: 15px; }
+
+/* ── HEADER ── */
+.site-header {
+  background: linear-gradient(160deg, #0E1628 0%, var(--navy) 60%, #1E3060 100%);
+  color: #fff; position: relative; overflow: hidden;
+}
+.site-header::before {
+  content: '✡';
+  position: absolute; font-size: 500px; opacity: .03;
+  color: var(--gold); right: -80px; top: -80px;
+  font-family: 'Playfair Display', serif; pointer-events: none;
+}
+.header-inner {
+  max-width: 900px; margin: 0 auto;
+  padding: 28px 24px 32px;
+  position: relative; z-index: 2;
+}
+.header-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 18px; margin-bottom: 18px;
+  border-bottom: 1px solid rgba(201,168,76,.25);
+}
+.logo-area { display: flex; align-items: center; gap: 12px; }
+.logo-area img { height: 40px; }
+.logo-txt { font-family: 'Lato', sans-serif; font-size: 8px; letter-spacing: 2px; color: rgba(201,168,76,.7); text-transform: uppercase; }
+.edicion-badge {
+  font-family: 'Lato', sans-serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: rgba(201,168,76,.6);
+  border: 1px solid rgba(201,168,76,.3); padding: 5px 12px; border-radius: 2px;
+}
+.header-title { margin-bottom: 8px; }
+.header-title .colegio { font-family: 'Playfair Display', serif; font-weight: 900; font-size: clamp(32px,6vw,58px); color: #fff; line-height: .95; display: block; }
+.header-title .revista { font-family: 'Playfair Display', serif; font-weight: 700; font-style: italic; font-size: clamp(18px,3vw,28px); color: var(--gold); display: block; margin-top: 4px; }
+.header-sub { font-family: 'EB Garamond', serif; font-size: 16px; font-style: italic; color: rgba(255,255,255,.65); margin-top: 10px; }
+.header-meta { display: flex; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(201,168,76,.2); flex-wrap: wrap; }
+.header-meta span { font-family: 'Lato', sans-serif; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(201,168,76,.6); }
+.header-meta strong { color: #fff; font-weight: 700; }
+
+/* ── EDICIONES NAV ── */
+.ediciones-bar {
+  background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(201,168,76,.15);
+}
+.ediciones-inner {
+  max-width: 900px; margin: 0 auto; padding: 12px 24px;
+  display: flex; gap: 8px; overflow-x: auto; align-items: center;
+}
+.edicion-pill {
+  font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: rgba(201,168,76,.6);
+  padding: 5px 14px; border-radius: 20px; border: 1px solid rgba(201,168,76,.25);
+  background: none; cursor: pointer; white-space: nowrap; transition: all .15s;
+  flex-shrink: 0;
+}
+.edicion-pill.active { background: var(--gold); color: #0E1628; border-color: var(--gold); }
+.edicion-pill:hover:not(.active) { border-color: var(--gold); color: var(--gold); }
+
+/* ── CONTENIDO PRINCIPAL ── */
+.main-content { max-width: 900px; margin: 0 auto; padding: 32px 24px 60px; }
+
+/* ── FILTRO POR NIVEL ── */
+.niveles-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+.nivel-btn {
+  font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 20px;
+  background: rgba(255,255,255,.06); color: rgba(255,255,255,.5);
+  border: 1px solid rgba(255,255,255,.1); cursor: pointer; transition: all .15s;
+}
+.nivel-btn.active, .nivel-btn:hover { opacity: 1; }
+
+/* ── ARTÍCULOS ── */
+.articulos-grid {
+  display: flex; flex-direction: column; gap: 0;
+}
+
+/* ARTÍCULO DESTACADO */
+.art-destacado {
+  background: var(--paper);
+  border-radius: 4px; overflow: hidden;
+  margin-bottom: 3px;
+  position: relative;
+}
+.art-destacado .art-img {
+  width: 100%; height: 280px; object-fit: cover; display: block;
+}
+.art-destacado .art-img-placeholder {
+  width: 100%; height: 280px;
+  background: var(--paper-dk); display: flex; align-items: center; justify-content: center;
+  font-size: 48px; opacity: .3; color: var(--muted);
+}
+.art-destacado .art-body { padding: 24px 28px 28px; }
+
+/* ARTÍCULO NORMAL */
+.art-normal {
+  background: var(--paper); border-radius: 4px; overflow: hidden;
+  display: grid; grid-template-columns: 1fr; margin-bottom: 3px;
+}
+@media (min-width: 600px) {
+  .art-normal { grid-template-columns: 200px 1fr; }
+  .art-normal .art-img, .art-normal .art-img-placeholder { width: 200px; height: 160px; }
+}
+.art-normal .art-img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.art-normal .art-img-placeholder {
+  width: 100%; height: 160px;
+  background: var(--paper-dk); display: flex; align-items: center; justify-content: center;
+  font-size: 32px; opacity: .3; color: var(--muted);
+}
+.art-normal .art-body { padding: 18px 22px; }
+
+/* ARTÍCULO COMUNICADO (sin imagen) */
+.art-comunicado {
+  background: var(--paper); border-radius: 4px; overflow: hidden;
+  margin-bottom: 3px; border-left: 4px solid var(--gold);
+}
+.art-comunicado .art-body { padding: 18px 22px; }
+
+/* Separador de sección */
+.seccion-header {
+  display: flex; align-items: center; gap: 12px;
+  margin: 28px 0 12px;
+}
+.seccion-header-bar { width: 4px; height: 24px; border-radius: 2px; flex-shrink: 0; }
+.seccion-header h2 { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: #fff; }
+.seccion-header span { font-family: 'Lato', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.4); margin-left: auto; }
+
+/* Elementos internos del artículo */
+.art-kicker {
+  font-family: 'Lato', sans-serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.art-kicker::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: currentColor; opacity: .4; }
+.art-titulo {
+  font-family: 'Playfair Display', serif; font-weight: 900;
+  color: var(--ink); line-height: 1.1; margin-bottom: 8px;
+}
+.art-destacado .art-titulo { font-size: clamp(20px,3.5vw,28px); }
+.art-normal .art-titulo { font-size: 18px; }
+.art-comunicado .art-titulo { font-size: 17px; }
+.art-bajada {
+  font-family: 'EB Garamond', serif; font-style: italic;
+  font-size: 15px; line-height: 1.6; color: #38385A; margin-bottom: 10px;
+}
+.art-normal .art-bajada, .art-comunicado .art-bajada { font-size: 13.5px; }
+.art-cuerpo {
+  font-family: 'EB Garamond', serif; font-size: 15px; line-height: 1.8;
+  color: var(--ink); margin-bottom: 12px;
+}
+.art-cuerpo p + p { text-indent: 1.2em; }
+.art-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 10px; border-top: 1px solid var(--rule);
+  font-family: 'Lato', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  flex-wrap: wrap; gap: 6px;
+}
+.leer-mas {
+  font-family: 'Lato', sans-serif; font-size: 9.5px; font-weight: 900;
+  letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold);
+  background: none; border: 1px solid rgba(201,168,76,.4);
+  padding: 5px 12px; border-radius: 2px; cursor: pointer; transition: all .15s;
+}
+.leer-mas:hover { background: var(--gold); color: var(--ink); }
+
+/* MODAL ARTÍCULO */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(10,16,40,.85);
+  backdrop-filter: blur(6px); z-index: 1000;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--paper); border-radius: 6px; max-width: 680px; width: 100%;
+  margin: auto; transform: translateY(20px); transition: transform .25s;
+  overflow: hidden;
+}
+.modal-overlay.open .modal-box { transform: translateY(0); }
+.modal-img { width: 100%; max-height: 340px; object-fit: cover; display: block; }
+.modal-body { padding: 28px 32px 36px; }
+.modal-close {
+  position: absolute; top: 18px; right: 18px; background: rgba(0,0,0,.5);
+  border: none; color: #fff; font-size: 20px; width: 36px; height: 36px;
+  border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+  justify-content: center; z-index: 10; transition: background .15s;
+}
+.modal-close:hover { background: rgba(0,0,0,.8); }
+
+/* ── ESTADO VACÍO ── */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: rgba(255,255,255,.3);
+}
+.empty-state p { font-family: 'Playfair Display', serif; font-size: 16px; font-style: italic; }
+
+/* ── FOOTER ── */
+.site-footer {
+  background: #0A1020; border-top: 1px solid rgba(201,168,76,.15);
+  padding: 24px; text-align: center;
+  font-family: 'Lato', sans-serif; font-size: 10px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: rgba(255,255,255,.25);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .header-inner { padding: 20px 16px 24px; }
+  .main-content { padding: 20px 12px 48px; }
+  .art-destacado .art-body { padding: 18px 16px 20px; }
+  .modal-body { padding: 20px 18px 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spin"></div>
+  <p>Cargando revista…</p>
+</div>
+
+<!-- Modal artículo completo -->
+<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
+  <div class="modal-box" style="position:relative">
+    <button class="modal-close" onclick="cerrarModal()">×</button>
+    <img id="modal-img" src="" alt="" class="modal-img" style="display:none">
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-top">
+      <div class="logo-area">
+        <img src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="Logo" onerror="this.style.display='none'">
+        <div class="logo-txt">Colegio Rabino<br>Iosef Caro</div>
+      </div>
+      <div class="edicion-badge" id="header-badge">Cargando…</div>
+    </div>
+    <div class="header-title">
+      <span class="colegio" id="header-titulo">Revista</span>
+      <span class="revista" id="header-subtitulo">Institucional</span>
+    </div>
+    <div class="header-sub" id="header-lema">"Formamos Iehudim íntegros para el mañana"</div>
+    <div class="header-meta">
+      <span>Edición <strong id="header-num">—</strong></span>
+      <span>Semana del <strong id="header-fecha">—</strong></span>
+      <span><strong id="header-cant">—</strong> artículos</span>
+    </div>
+  </div>
+</header>
+
+<!-- Ediciones anteriores -->
+<div class="ediciones-bar">
+  <div class="ediciones-inner" id="ediciones-nav"></div>
+</div>
+
+<!-- Contenido -->
+<div class="main-content">
+  <!-- Filtro niveles -->
+  <div class="niveles-filter" id="niveles-filter"></div>
+  <!-- Artículos -->
+  <div class="articulos-grid" id="articulos-grid"></div>
+</div>
+
+<footer class="site-footer">
+  Revista Institucional · Colegio Rabino Iosef Caro · Belgrano, Buenos Aires
+</footer>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, getDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDGGYTx7Hj4G2IbYxkxm5rx25sVKDy4DYA",
+  authDomain: "revista-1ac1c.firebaseapp.com",
+  projectId: "revista-1ac1c",
+  storageBucket: "revista-1ac1c.firebasestorage.app",
+  messagingSenderId: "137545616566",
+  appId: "1:137545616566:web:f74736d93682e2727dea17"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const NIVELES = {
+  institucional: { label: 'Institucional', color: '#C9A84C', icon: '■' },
+  inicial:       { label: 'Nivel Inicial',    color: '#C07030', icon: '✦' },
+  primaria:      { label: 'Nivel Primario',   color: '#2A7A50', icon: '◆' },
+  secundaria:    { label: 'Nivel Secundario', color: '#2A50A0', icon: '▲' },
+  reshit:        { label: 'Reshit',           color: '#7030A0', icon: '✡' },
+};
+
+const TIPOS = {
+  noticia:      'Noticia',
+  galeria:      'Galería',
+  proyecto:     'Proyecto',
+  evento:       'Evento',
+  comunicado:   'Comunicado',
+  aviso:        'Aviso',
+};
+
+let todasEdiciones = [];
+let edicionActual = null;
+let articulosActuales = [];
+let filtroNivel = 'todos';
+
+// ─── CARGA INICIAL ───────────────────────────────────────────
+async function init() {
+  try {
+    // Cargar todas las ediciones publicadas
+    const snEdiciones = await getDocs(
+      query(collection(db, 'ediciones'), orderBy('fechaInicio', 'desc'))
+    );
+    todasEdiciones = snEdiciones.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(e => e.estado === 'publicada');
+
+    if (!todasEdiciones.length) {
+      ocultarLoading();
+      document.getElementById('articulos-grid').innerHTML =
+        '<div class="empty-state"><p>No hay ediciones publicadas aún.</p></div>';
+      return;
+    }
+
+    renderEdicionesNav();
+    await cargarEdicion(todasEdiciones[0]);
+    ocultarLoading();
+  } catch (e) {
+    console.error(e);
+    ocultarLoading();
+    document.getElementById('articulos-grid').innerHTML =
+      '<div class="empty-state"><p>Error al cargar. Intentá de nuevo.</p></div>';
+  }
+}
+
+async function cargarEdicion(edicion) {
+  edicionActual = edicion;
+
+  // Header
+  document.getElementById('header-badge').textContent = `Edición ${edicion.numero || ''}`;
+  document.getElementById('header-titulo').textContent = edicion.titulo || 'Revista Institucional';
+  document.getElementById('header-subtitulo').textContent = edicion.subtitulo || 'Colegio Iosef Caro';
+  document.getElementById('header-num').textContent = edicion.numero || '—';
+  document.getElementById('header-fecha').textContent = formatFecha(edicion.fechaInicio);
+
+  // Marcar activa en nav
+  document.querySelectorAll('.edicion-pill').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === edicion.id);
+  });
+
+  // Cargar artículos de esta edición
+  const snArts = await getDocs(
+    query(
+      collection(db, 'articulos'),
+      where('edicionId', '==', edicion.id),
+      where('estado', '==', 'publicado'),
+      orderBy('orden', 'asc')
+    )
+  );
+  articulosActuales = snArts.docs.map(d => ({ id: d.id, ...d.data() }));
+  document.getElementById('header-cant').textContent = articulosActuales.length;
+
+  renderFiltroNiveles();
+  renderArticulos();
+}
+
+// ─── RENDER NAV EDICIONES ────────────────────────────────────
+function renderEdicionesNav() {
+  const nav = document.getElementById('ediciones-nav');
+  nav.innerHTML = '';
+  todasEdiciones.forEach(e => {
+    const btn = document.createElement('button');
+    btn.className = 'edicion-pill' + (e === todasEdiciones[0] ? ' active' : '');
+    btn.dataset.id = e.id;
+    btn.textContent = `Semana ${formatFechaCorta(e.fechaInicio)}`;
+    btn.onclick = () => cargarEdicion(e);
+    nav.appendChild(btn);
+  });
+}
+
+// ─── FILTRO NIVELES ──────────────────────────────────────────
+function renderFiltroNiveles() {
+  const nivelesPresentes = ['todos', ...new Set(articulosActuales.map(a => a.nivel).filter(Boolean))];
+  const container = document.getElementById('niveles-filter');
+  container.innerHTML = '';
+  nivelesPresentes.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'nivel-btn' + (filtroNivel === n ? ' active' : '');
+    if (n === 'todos') {
+      btn.textContent = 'Todos';
+      btn.style.borderColor = 'rgba(255,255,255,.3)';
+      btn.style.color = filtroNivel === 'todos' ? '#fff' : 'rgba(255,255,255,.5)';
+    } else {
+      const niv = NIVELES[n] || { label: n, color: '#888' };
+      btn.textContent = niv.icon + ' ' + niv.label;
+      btn.style.borderColor = filtroNivel === n ? niv.color : 'rgba(255,255,255,.15)';
+      btn.style.color = filtroNivel === n ? niv.color : 'rgba(255,255,255,.5)';
+      if (filtroNivel === n) btn.style.background = niv.color + '18';
+    }
+    btn.onclick = () => { filtroNivel = n; renderFiltroNiveles(); renderArticulos(); };
+    container.appendChild(btn);
+  });
+}
+
+// ─── RENDER ARTÍCULOS ────────────────────────────────────────
+function renderArticulos() {
+  const arts = filtroNivel === 'todos'
+    ? articulosActuales
+    : articulosActuales.filter(a => a.nivel === filtroNivel);
+
+  const grid = document.getElementById('articulos-grid');
+  grid.innerHTML = '';
+
+  if (!arts.length) {
+    grid.innerHTML = '<div class="empty-state"><p>No hay artículos para este nivel.</p></div>';
+    return;
+  }
+
+  // Agrupar por nivel para mostrar sección headers cuando está en "todos"
+  if (filtroNivel === 'todos') {
+    const porNivel = {};
+    arts.forEach(a => {
+      const n = a.nivel || 'institucional';
+      if (!porNivel[n]) porNivel[n] = [];
+      porNivel[n].push(a);
+    });
+
+    let primero = true;
+    Object.entries(porNivel).forEach(([nKey, lista]) => {
+      const niv = NIVELES[nKey] || { label: nKey, color: '#888', icon: '·' };
+
+      // Header de sección
+      const secDiv = document.createElement('div');
+      secDiv.className = 'seccion-header';
+      if (!primero) secDiv.style.marginTop = '36px';
+      secDiv.innerHTML = `
+        <div class="seccion-header-bar" style="background:${niv.color}"></div>
+        <h2>${niv.icon} ${niv.label}</h2>
+        <span>${lista.length} artículo${lista.length !== 1 ? 's' : ''}</span>
+      `;
+      grid.appendChild(secDiv);
+      primero = false;
+
+      lista.forEach((art, i) => {
+        grid.appendChild(crearTarjetaArticulo(art, i === 0 && lista.length >= 2));
+      });
+    });
+  } else {
+    arts.forEach((art, i) => {
+      grid.appendChild(crearTarjetaArticulo(art, i === 0));
+    });
+  }
+}
+
+// ─── TARJETA ─────────────────────────────────────────────────
+function crearTarjetaArticulo(art, destacado) {
+  const niv = NIVELES[art.nivel] || { label: art.nivel, color: '#888', icon: '·' };
+  const tipo = TIPOS[art.tipo] || art.tipo || '';
+  const tieneImg = art.imagenUrl && art.imagenUrl.trim();
+  const tieneContenido = art.cuerpo && art.cuerpo.trim();
+
+  const div = document.createElement('div');
+
+  if (art.tipo === 'comunicado' || art.tipo === 'aviso') {
+    div.className = 'art-comunicado';
+    div.style.borderLeftColor = niv.color;
+    div.innerHTML = `
+      <div class="art-body">
+        <div class="art-kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+        <div class="art-titulo">${art.titulo || ''}</div>
+        ${art.bajada ? `<div class="art-bajada">${art.bajada}</div>` : ''}
+        ${tieneContenido ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo)}</div>` : ''}
+        <div class="art-footer">
+          <span>${art.autor || ''} ${art.sala ? '· ' + art.sala : ''}</span>
+          <span>${art.fecha || ''}</span>
+        </div>
+      </div>
+    `;
+  } else if (destacado && tieneImg) {
+    div.className = 'art-destacado';
+    div.innerHTML = `
+      <img class="art-img" src="${driveUrl(art.imagenUrl)}" alt="${art.titulo || ''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="art-img-placeholder" style="display:none">📷</div>
+      <div class="art-body">
+        <div class="art-kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+        <div class="art-titulo">${art.titulo || ''}</div>
+        ${art.bajada ? `<div class="art-bajada">${art.bajada}</div>` : ''}
+        ${tieneContenido ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo, 300)}</div>` : ''}
+        <div class="art-footer">
+          <span>${art.autor || ''} ${art.sala ? '· ' + art.sala : ''}</span>
+          ${tieneContenido && art.cuerpo.length > 300
+            ? `<button class="leer-mas" onclick="abrirModal('${art.id}')">Leer más →</button>`
+            : `<span>${art.fecha || ''}</span>`}
+        </div>
+      </div>
+    `;
+  } else {
+    div.className = 'art-normal';
+    if (tieneImg) {
+      div.innerHTML = `
+        <img class="art-img" src="${driveUrl(art.imagenUrl)}" alt="${art.titulo || ''}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="art-img-placeholder" style="display:none">📷</div>
+        <div class="art-body">
+          <div class="art-kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+          <div class="art-titulo" style="font-size:17px">${art.titulo || ''}</div>
+          ${art.bajada ? `<div class="art-bajada">${art.bajada}</div>` : ''}
+          <div class="art-footer">
+            <span>${art.autor || ''}</span>
+            ${tieneContenido ? `<button class="leer-mas" onclick="abrirModal('${art.id}')">Leer →</button>` : `<span>${art.fecha || ''}</span>`}
+          </div>
+        </div>
+      `;
+    } else {
+      div.innerHTML = `
+        <div class="art-body" style="grid-column:1/-1">
+          <div class="art-kicker" style="color:${niv.color}">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+          <div class="art-titulo" style="font-size:17px">${art.titulo || ''}</div>
+          ${art.bajada ? `<div class="art-bajada">${art.bajada}</div>` : ''}
+          ${tieneContenido ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo, 200)}</div>` : ''}
+          <div class="art-footer">
+            <span>${art.autor || ''} ${art.sala ? '· ' + art.sala : ''}</span>
+            ${tieneContenido && art.cuerpo.length > 200
+              ? `<button class="leer-mas" onclick="abrirModal('${art.id}')">Leer más →</button>`
+              : `<span>${art.fecha || ''}</span>`}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  return div;
+}
+
+// ─── MODAL ───────────────────────────────────────────────────
+window.abrirModal = async function(artId) {
+  const art = articulosActuales.find(a => a.id === artId);
+  if (!art) return;
+  const niv = NIVELES[art.nivel] || { label: art.nivel, color: '#888', icon: '·' };
+  const tipo = TIPOS[art.tipo] || art.tipo || '';
+
+  const imgEl = document.getElementById('modal-img');
+  if (art.imagenUrl && art.imagenUrl.trim()) {
+    imgEl.src = driveUrl(art.imagenUrl);
+    imgEl.style.display = 'block';
+    imgEl.onerror = () => { imgEl.style.display = 'none'; };
+  } else {
+    imgEl.style.display = 'none';
+  }
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="art-kicker" style="color:${niv.color};margin-bottom:10px">${niv.icon} ${niv.label} &nbsp;·&nbsp; ${tipo}</div>
+    <div class="art-titulo" style="font-size:clamp(22px,4vw,32px);margin-bottom:10px">${art.titulo || ''}</div>
+    ${art.bajada ? `<div class="art-bajada" style="font-size:16px;margin-bottom:16px">${art.bajada}</div>` : ''}
+    <hr style="border:none;border-top:1px solid var(--rule);margin:12px 0">
+    ${art.cuerpo ? `<div class="art-cuerpo">${formatCuerpo(art.cuerpo)}</div>` : ''}
+    <div class="art-footer" style="margin-top:16px">
+      <span>${art.autor || ''} ${art.sala ? '· ' + art.sala : ''}</span>
+      <span>${art.fecha || ''}</span>
+    </div>
+  `;
+
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+};
+
+window.cerrarModal = function(e) {
+  if (e && e.target !== document.getElementById('modal') && !e.target.classList.contains('modal-close')) return;
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow = '';
+};
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarModal(); });
+
+// ─── UTILIDADES ──────────────────────────────────────────────
+function driveUrl(url) {
+  if (!url) return '';
+  // Convertir links de Google Drive a imagen directa
+  const m = url.match(/\/d\/([^/]+)/);
+  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  return url;
+}
+
+function formatCuerpo(texto, maxChars) {
+  if (!texto) return '';
+  const t = maxChars && texto.length > maxChars ? texto.slice(0, maxChars) + '…' : texto;
+  return t.split('\n').filter(p => p.trim()).map(p => `<p>${p}</p>`).join('');
+}
+
+function formatFecha(ts) {
+  if (!ts) return '—';
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+  } catch { return String(ts); }
+}
+
+function formatFechaCorta(ts) {
+  if (!ts) return '—';
+  try {
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+  } catch { return String(ts); }
+}
+
+function ocultarLoading() {
+  const l = document.getElementById('loading');
+  l.style.opacity = '0';
+  setTimeout(() => l.remove(), 400);
+}
+
+init();
+</script>
+</body>
+</html>
