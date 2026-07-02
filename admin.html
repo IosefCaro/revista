@@ -411,8 +411,10 @@ async function renderRevision() {
   const pg = document.getElementById('page-content');
   pg.innerHTML = '<div class="loading-spin"></div>';
   try {
-    const sn = await getDocs(query(collection(db,'articulos'), where('estado','==','revision'), orderBy('creadoEn','asc')));
-    const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+    // Sin orderBy en la query (evita pedir índice compuesto); ordenamos en JS
+    const sn = await getDocs(query(collection(db,'articulos'), where('estado','==','revision')));
+    const arts = sn.docs.map(d => ({id:d.id,...d.data()}))
+      .sort((a,b) => (a.creadoEn?.toMillis?.()||0) - (b.creadoEn?.toMillis?.()||0));
 
     if (!arts.length) {
       pg.innerHTML = '<div style="text-align:center;padding:60px 20px"><div style="font-size:48px;margin-bottom:12px">✅</div><div style="font-family:\'Playfair Display\',serif;font-size:18px;font-style:italic;color:var(--muted)">Sin artículos pendientes de revisión</div></div>';
@@ -752,13 +754,18 @@ window.renderArticulosFiltrado = async function(edIdDefault) {
   if (!list) return;
   list.innerHTML = '<div class="loading-spin"></div>';
 
-  let q = query(collection(db,'articulos'), orderBy('creadoEn','desc'));
-  if (edId)   q = query(collection(db,'articulos'), where('edicionId','==',edId), orderBy('orden','asc'));
-  if (estado && !edId) q = query(collection(db,'articulos'), where('estado','==',estado), orderBy('creadoEn','desc'));
-  if (estado && edId)  q = query(collection(db,'articulos'), where('edicionId','==',edId), where('estado','==',estado), orderBy('orden','asc'));
+  // Sin orderBy en la query (evita pedir índices compuestos nuevos por cada combinación
+  // de filtros); traemos por el filtro más selectivo disponible y ordenamos en JS.
+  let q = collection(db,'articulos');
+  if (edId && estado)      q = query(collection(db,'articulos'), where('edicionId','==',edId), where('estado','==',estado));
+  else if (edId)           q = query(collection(db,'articulos'), where('edicionId','==',edId));
+  else if (estado)         q = query(collection(db,'articulos'), where('estado','==',estado));
 
   const sn = await getDocs(q);
-  const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+  let arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+  arts = edId
+    ? arts.sort((a,b) => (a.orden??99) - (b.orden??99))
+    : arts.sort((a,b) => (b.creadoEn?.toMillis?.()||0) - (a.creadoEn?.toMillis?.()||0));
 
   if (!arts.length) { list.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Sin artículos</div>'; return; }
 
