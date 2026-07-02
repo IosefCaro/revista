@@ -449,10 +449,12 @@ async function cargarMisArticulos() {
   const cont = document.getElementById('mis-arts');
   cont.innerHTML = '<div class="spin"></div>';
   try {
+    // Sin orderBy en la query (evita pedir índice compuesto); ordenamos en JS
     const sn = await getDocs(
-      query(collection(db,'articulos'), where('docenteEmail','==',currentUser.email), orderBy('creadoEn','desc'))
+      query(collection(db,'articulos'), where('docenteEmail','==',currentUser.email))
     );
-    const arts = sn.docs.map(d => ({id:d.id,...d.data()}));
+    const arts = sn.docs.map(d => ({id:d.id,...d.data()}))
+      .sort((a,b) => (b.creadoEn?.toMillis?.()||0) - (a.creadoEn?.toMillis?.()||0));
     if (!arts.length) {
       cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No enviaste artículos aún.</div>';
       return;
