@@ -786,28 +786,240 @@ window.eliminarArticulo = async function(artId) {
 async function renderDocentes() {
   const pg = document.getElementById('page-content');
   pg.innerHTML = `
-    <div style="max-width:560px">
-      <div class="card cp" style="margin-bottom:16px">
-        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Cómo funcionan los accesos de docentes</div>
-        <div style="font-size:13px;color:var(--ink);line-height:1.7">
-          Los docentes acceden a <strong style="color:var(--gold)">docente.html</strong> con su email y contraseña.<br>
-          Desde ahí pueden enviar artículos que quedan en estado <span class="bdg bdg-rev" style="vertical-align:middle">revisión</span>.<br>
-          Vos los recibís acá en el panel de Revisión para editar y publicar.
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:860px">
+
+      <!-- CREAR USUARIO -->
+      <div>
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Crear acceso docente</div>
+        <div class="card cp">
+          <div style="display:flex;flex-direction:column;gap:13px">
+            <div class="field">
+              <label class="lbl">Nombre completo</label>
+              <input class="ai" id="doc-nombre" placeholder="Ej: Daniela Rodríguez">
+            </div>
+            <div class="field">
+              <label class="lbl">Email institucional</label>
+              <input class="ai" type="email" id="doc-email" placeholder="nombre@iosefcaro.edu.ar">
+            </div>
+            <div class="field">
+              <label class="lbl">Contraseña inicial</label>
+              <div style="position:relative">
+                <input class="ai" type="password" id="doc-pass" placeholder="Mínimo 6 caracteres">
+                <button onclick="togglePass('doc-pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">👁</button>
+              </div>
+              <span style="font-size:11px;color:var(--muted)">El docente podrá cambiarla después.</span>
+            </div>
+            <div class="field">
+              <label class="lbl">Nivel / Sección asignada</label>
+              <select class="ai" id="doc-nivel">
+                <option value="">Sin asignar</option>
+                <option value="institucional">■ Institucional</option>
+                <option value="inicial">✦ Nivel Inicial</option>
+                <option value="primaria">◆ Nivel Primario</option>
+                <option value="secundaria">▲ Nivel Secundario</option>
+                <option value="reshit">✡ Reshit</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="lbl">Nota interna (opcional)</label>
+              <input class="ai" id="doc-nota" placeholder="Ej: Maestra de Sala Azul">
+            </div>
+            <button class="btn btn-gold btn-full" onclick="crearDocente()" id="btn-crear-doc">
+              Crear acceso →
+            </button>
+          </div>
         </div>
       </div>
-      <div class="card cp">
-        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Crear usuario docente en Firebase</div>
-        <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-          Andá a <a href="https://console.firebase.google.com" target="_blank" style="color:var(--gold)">console.firebase.google.com</a> → tu proyecto → Authentication → Add user.<br>
-          Poné el email y contraseña del docente. Listo.
-        </div>
-        <div style="background:var(--bg);border-radius:6px;padding:12px;font-family:monospace;font-size:11px;color:var(--muted)">
-          Proyecto: <span style="color:var(--gold)">revista-1ac1c</span>
-        </div>
+
+      <!-- LISTA DOCENTES -->
+      <div>
+        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Docentes con acceso</div>
+        <div id="lista-docentes"><div class="loading-spin"></div></div>
       </div>
     </div>
   `;
+
+  cargarListaDocentes();
 }
+
+window.togglePass = function(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+};
+
+window.crearDocente = async function() {
+  const nombre = document.getElementById('doc-nombre').value.trim();
+  const email  = document.getElementById('doc-email').value.trim();
+  const pass   = document.getElementById('doc-pass').value;
+  const nivel  = document.getElementById('doc-nivel').value;
+  const nota   = document.getElementById('doc-nota').value.trim();
+
+  if (!nombre) { toast('Ingresá el nombre completo', 'err'); return; }
+  if (!email)  { toast('Ingresá el email', 'err'); return; }
+  if (pass.length < 6) { toast('La contraseña debe tener al menos 6 caracteres', 'err'); return; }
+
+  const btn = document.getElementById('btn-crear-doc');
+  btn.disabled = true; btn.textContent = 'Creando usuario…';
+
+  try {
+    // Crear usuario en Firebase Auth usando una segunda instancia
+    // para no cerrar la sesión del admin
+    const { initializeApp: initApp2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const { getAuth: getAuth2, createUserWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+
+    const app2 = initApp2(firebaseConfig, 'app-temp-' + Date.now());
+    const auth2 = getAuth2(app2);
+    const cred = await createUserWithEmailAndPassword(auth2, email, pass);
+    await auth2.signOut();
+
+    // Guardar datos del docente en Firestore
+    await setDoc(doc(db, 'docentes', cred.user.uid), {
+      uid:    cred.user.uid,
+      nombre, email, nivel, nota,
+      rol:    'docente',
+      activo: true,
+      creadoEn: serverTimestamp(),
+    });
+
+    toast(`✓ Acceso creado para ${nombre}`);
+    // Limpiar form
+    ['doc-nombre','doc-email','doc-pass','doc-nota'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('doc-nivel').value = '';
+    cargarListaDocentes();
+  } catch(e) {
+    const msgs = {
+      'auth/email-already-in-use': 'Ese email ya tiene una cuenta.',
+      'auth/invalid-email':        'El email no es válido.',
+      'auth/weak-password':        'La contraseña es demasiado débil.',
+    };
+    toast(msgs[e.code] || 'Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Crear acceso →';
+  }
+};
+
+async function cargarListaDocentes() {
+  const cont = document.getElementById('lista-docentes');
+  if (!cont) return;
+  try {
+    const sn = await getDocs(query(collection(db,'docentes'), orderBy('creadoEn','desc')));
+    const docs = sn.docs.map(d => ({id:d.id,...d.data()}));
+
+    if (!docs.length) {
+      cont.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No hay docentes creados aún.</div>';
+      return;
+    }
+
+    const NIVELES_LABEL = {
+      institucional:'■ Institucional', inicial:'✦ Inicial',
+      primaria:'◆ Primaria', secundaria:'▲ Secundaria', reshit:'✡ Reshit'
+    };
+
+    cont.innerHTML = docs.map(d => `
+      <div style="background:var(--navy);border:1px solid ${d.activo?'var(--rule)':'var(--err)33'};border-radius:8px;padding:13px 15px;margin-bottom:8px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:14px;font-weight:700;color:${d.activo?'var(--white)':'var(--muted)'}">${d.nombre||'—'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.email}</div>
+            <div style="display:flex;gap:7px;margin-top:6px;flex-wrap:wrap;align-items:center">
+              ${d.nivel ? `<span style="font-size:9px;font-weight:700;color:var(--gold)">${NIVELES_LABEL[d.nivel]||d.nivel}</span>` : ''}
+              ${d.nota  ? `<span style="font-size:10px;color:var(--muted)">${d.nota}</span>` : ''}
+              <span class="bdg ${d.activo?'bdg-pub':'bdg-bor'}" style="font-size:8px">${d.activo?'Activo':'Desactivado'}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="editarDocente('${d.id}')">Editar</button>
+            <button class="btn ${d.activo?'btn-danger':'btn-ok'} btn-sm" onclick="toggleDocente('${d.id}',${d.activo})">
+              ${d.activo?'Desactivar':'Activar'}
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="resetPassDocente('${d.id}','${esc(d.email)}','${esc(d.nombre)}')">🔑 Pass</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    cont.innerHTML = `<div style="color:var(--err);font-size:12px;padding:16px">Error al cargar: ${e.message}</div>`;
+  }
+}
+
+window.toggleDocente = async function(docId, activo) {
+  const accion = activo ? 'desactivar' : 'activar';
+  if (!confirm(`¿${accion.charAt(0).toUpperCase()+accion.slice(1)} este docente? ${activo?'No podrá iniciar sesión.':''}`)) return;
+  await updateDoc(doc(db,'docentes',docId), { activo: !activo, actualizadoEn: serverTimestamp() });
+  toast(`Docente ${!activo?'activado':'desactivado'}`);
+  cargarListaDocentes();
+};
+
+window.editarDocente = async function(docId) {
+  const sn = await getDoc(doc(db,'docentes',docId));
+  if (!sn.exists()) return;
+  const d = sn.data();
+
+  const NIVELES_OPTS = ['','institucional','inicial','primaria','secundaria','reshit'];
+  const NIVELES_LABEL = {'':"Sin asignar",institucional:"■ Institucional",inicial:"✦ Nivel Inicial",primaria:"◆ Nivel Primario",secundaria:"▲ Nivel Secundario",reshit:"✡ Reshit"};
+
+  document.getElementById('modal-art-titulo').textContent = '✏️ Editar docente';
+  document.getElementById('modal-art-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="field"><label class="lbl">Nombre completo</label><input class="ai" id="edit-doc-nombre" value="${esc(d.nombre||'')}"></div>
+      <div class="field"><label class="lbl">Email (no editable)</label><input class="ai" value="${esc(d.email||'')}" disabled style="opacity:.5"></div>
+      <div class="field">
+        <label class="lbl">Nivel / Sección</label>
+        <select class="ai" id="edit-doc-nivel">
+          ${NIVELES_OPTS.map(n=>`<option value="${n}" ${d.nivel===n?'selected':''}>${NIVELES_LABEL[n]}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label class="lbl">Nota interna</label><input class="ai" id="edit-doc-nota" value="${esc(d.nota||'')}" placeholder="Ej: Maestra de Sala Azul"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>
+        <button class="btn btn-gold btn-sm" onclick="guardarEdicionDocente('${docId}')">Guardar</button>
+      </div>
+    </div>
+  `;
+  abrirModal('modal-art');
+};
+
+window.guardarEdicionDocente = async function(docId) {
+  const nombre = document.getElementById('edit-doc-nombre').value.trim();
+  const nivel  = document.getElementById('edit-doc-nivel').value;
+  const nota   = document.getElementById('edit-doc-nota').value.trim();
+  if (!nombre) { toast('El nombre es obligatorio', 'err'); return; }
+  await updateDoc(doc(db,'docentes',docId), { nombre, nivel, nota, actualizadoEn: serverTimestamp() });
+  toast('Docente actualizado ✓');
+  cerrarModal('modal-art');
+  cargarListaDocentes();
+};
+
+window.resetPassDocente = async function(docId, email, nombre) {
+  const nuevaPass = prompt(`Nueva contraseña para ${nombre} (${email}):\nMínimo 6 caracteres.`);
+  if (!nuevaPass) return;
+  if (nuevaPass.length < 6) { toast('Mínimo 6 caracteres', 'err'); return; }
+
+  try {
+    // Usar segunda instancia para cambiar contraseña sin afectar sesión del admin
+    const { initializeApp: initApp2 } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const { getAuth: getAuth2, signInWithEmailAndPassword, updatePassword } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+
+    // Para cambiar contraseña necesitamos la contraseña actual
+    const passActual = prompt(`Para cambiar la contraseña de ${nombre},\ningresá su contraseña ACTUAL:`);
+    if (!passActual) return;
+
+    const app2 = initApp2(firebaseConfig, 'app-reset-' + Date.now());
+    const auth2 = getAuth2(app2);
+    const cred = await signInWithEmailAndPassword(auth2, email, passActual);
+    await updatePassword(cred.user, nuevaPass);
+    await auth2.signOut();
+
+    toast(`Contraseña de ${nombre} actualizada ✓`);
+  } catch(e) {
+    const msgs = {
+      'auth/wrong-password': 'Contraseña actual incorrecta.',
+      'auth/weak-password':  'La nueva contraseña es muy débil.',
+    };
+    toast(msgs[e.code] || 'Error: ' + e.message, 'err');
+  }
+};
 
 // ═══ HELPERS ═════════════════════════════════════════════════
 function formatFecha(ts) {
