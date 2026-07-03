@@ -3750,6 +3750,27 @@ function artcanInitFromBloques() {
   artcanActualizarHeader();
 }
 window.artcanInitFromBloques = artcanInitFromBloques;
+
+// ── Exponer al scope global todas las funciones llamadas desde HTML ──
+window.autoguardar            = autoguardar;
+window.actualizarPreviewEditor= actualizarPreviewEditor;
+window.setTab                 = setTab;
+window.doLogin                = doLogin;
+window.doLogout               = doLogout;
+window.cerrarModal            = cerrarModal;
+window.abrirModal             = abrirModal;
+window.agregarBloque          = agregarBloque;
+window.eliminarBloque         = eliminarBloque;
+window.moverBloque            = moverBloque;
+window.duplicarBloque         = duplicarBloque;
+window.prevImgBloque          = prevImgBloque;
+window.insertarPullQuote      = insertarPullQuote;
+window.rteCmd                 = rteCmd;
+window.abrirRevision          = abrirRevision;
+window.rechazarArticulo       = rechazarArticulo;
+window.eliminarArticulo       = eliminarArticulo;
+window.guardarArticulo        = guardarArticulo;
+
 </script>
 </body>
 </html>
