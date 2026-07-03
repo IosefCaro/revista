@@ -1265,6 +1265,12 @@ window.duplicarBloque = function(id) {
 
 // Sincronizar HTML de contenteditable antes de guardar
 function sincronizarBloques() {
+  // Si el canvas de artículo está activo, sincronizar desde él
+  if (document.getElementById('artcan-drop-l') && window.artcanSincronizarABloques) {
+    artcanSincronizarABloques();
+    return;
+  }
+  // Sino, sincronizar desde los editores rich text del panel izquierdo
   bloques.forEach(b => {
     if (b.tipo === 'texto') {
       const el = document.getElementById('rte-'+b.id);
@@ -1819,7 +1825,13 @@ window.setPrevTab = function(tab) {
 
 function actualizarPreviewEditor() {
   clearTimeout(previewTimer);
-  previewTimer = setTimeout(buildPreviewRevista, 280);
+  previewTimer = setTimeout(() => {
+    buildPreviewRevista();
+    // También actualizar el header del canvas de artículo si está presente
+    if (document.getElementById('artcan-drop-l') && window.artcanActualizarHeader) {
+      artcanActualizarHeader();
+    }
+  }, 280);
 }
 
 function buildPreviewRevista() {
@@ -2090,6 +2102,8 @@ function renderBloquesEditor() {
   // Actualizar preview y contadores
   actualizarPreviewEditor();
   actualizarStatusBar();
+  // Inicializar canvas de artículo si el modal ya lo tiene
+  setTimeout(() => { if (window.artcanInitFromBloques) artcanInitFromBloques(); }, 80);
 }
 
 // ═══ MODAL ARTÍCULO (editar / revisar) ═══════════════════════
@@ -3715,45 +3729,21 @@ function artcanRenderLista() {
   };
 }
 
-// ── HOOK: cuando se abre el modal, inicializar el canvas ──────
-// Se llama desde renderBloquesEditor() ya que sucede después de que
-// el modal se abre y los metadatos están cargados
-const _origRenderBloques = renderBloquesEditor;
-window.renderBloquesEditor = function() {
-  _origRenderBloques();
-  // Pequeño delay para asegurar que el DOM del modal esté listo
-  setTimeout(() => {
-    if (document.getElementById('artcan-drop-l')) {
-      artcanBloques = bloques.map(b => ({
-        ...b,
-        canId: b.id,
-        pagina: 'l', // temporal, se distribuyen abajo
-      }));
-      // Distribuir: los primeros 60% a la izquierda, resto a la derecha
-      const mitad = Math.ceil(artcanBloques.length * 0.55);
-      artcanBloques.forEach((b,i) => b.pagina = i<mitad?'l':'r');
-      artcanRender();
-      artcanActualizarHeader();
-    }
-  }, 80);
-};
-
-// Hook para actualizar el header cuando cambian los metadatos
-const _origActPrev = actualizarPreviewEditor;
-window.actualizarPreviewEditor = function() {
-  _origActPrev();
-  if (document.getElementById('artcan-drop-l')) artcanActualizarHeader();
-};
-
-// Asegurarse que sincronizarBloques incluya los del canvas
-const _origSincronizar = sincronizarBloques;
-window.sincronizarBloques = function() {
-  if (document.getElementById('artcan-drop-l')) {
-    artcanSincronizarABloques();
-  } else {
-    _origSincronizar();
-  }
-};
+// ── HOOK: inicializar canvas cuando se abre el modal ─────────
+// artcanInitFromBloques() se llama al final de renderBloquesEditor()
+function artcanInitFromBloques() {
+  if (!document.getElementById('artcan-drop-l')) return;
+  artcanBloques = bloques.map((b, i) => ({
+    ...b,
+    canId: b.id,
+    pagina: 'l',
+  }));
+  const mitad = Math.ceil(artcanBloques.length * 0.55);
+  artcanBloques.forEach((b, i) => b.pagina = i < mitad ? 'l' : 'r');
+  artcanRender();
+  artcanActualizarHeader();
+}
+window.artcanInitFromBloques = artcanInitFromBloques;
 </script>
 </body>
 </html>
