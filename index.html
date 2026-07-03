@@ -623,10 +623,15 @@ function buildSpreadHTML(sp, i) {
 // ── PORTADA + ÍNDICE ─────────────────────────────────────────
 function buildPortada(i) {
   const ed = edActual;
+
+  // Si la edición tiene diseño drag&drop, usarlo
+  if (Array.isArray(ed?.tapaElementos) && ed.tapaElementos.length) {
+    return buildPortadaDragDrop(ed, i);
+  }
+
+  // Fallback: portada clásica
   const coverImg = driveUrl(ed?.portadaImagenUrl || '');
   const logoUrl  = ed?.logoUrl || 'https://i.ibb.co/hF7Sqzw5/Logo-blanco.png';
-
-  // Página izquierda: TAPA
   let tapaHTML = `
     <div class="pg cover-page">
       ${coverImg ? `<img class="cover-img" src="${coverImg}" alt="" onerror="this.style.display='none'">` : ''}
@@ -690,6 +695,75 @@ function buildPortada(i) {
   return tapaHTML + indiceHTML;
 }
 
+// ── PORTADA DRAG & DROP (cuando está diseñada desde el admin) ──
+function buildPortadaDragDrop(ed, i) {
+  const bgUrl = driveUrl(ed.tapaBgUrl||'');
+
+  // Renderizar los elementos drag&drop en la página izquierda
+  const elsHTML = ed.tapaElementos.map(el => {
+    const style = `position:absolute;left:${el.x}%;top:${el.y}%;width:${el.w}%;height:${el.h}%`;
+    let inner = '';
+    if (el.tipo==='linea') {
+      inner = `<div style="width:100%;height:100%;background:linear-gradient(90deg,transparent 0%,#C9A84C 20%,#F5EDD0 50%,#C9A84C 80%,transparent 100%);border-radius:1px"></div>`;
+    } else if (el.tipo==='estrella') {
+      inner = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:${el.fs||220}px;color:${el.color||'rgba(201,168,76,.06)'};line-height:1;pointer-events:none;user-select:none">✡</div>`;
+    } else if (el.tipo==='imagen'&&el.src) {
+      inner = `<img src="${driveUrl(el.src)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`;
+    } else if (el.tipo==='logo'&&el.src) {
+      inner = `<img src="${el.src}" style="width:100%;height:100%;object-fit:contain" onerror="this.style.display='none'">`;
+    } else if (el.text) {
+      const fam = (el.tipo==='titulo'||el.tipo==='subtitulo'||el.tipo==='hebreo') ? "'Playfair Display',serif" : "'Lato',sans-serif";
+      const dir = el.tipo==='hebreo' ? 'rtl' : 'ltr';
+      const s   = `width:100%;height:100%;overflow:hidden;font-size:${el.fs||14}px;color:${el.color||'#fff'};font-weight:${el.fw||'400'};font-style:${el.fi||'normal'};text-align:${el.ta||'left'};line-height:1.25;white-space:pre-wrap;word-break:break-word;font-family:${fam};direction:${dir}`;
+      inner = `<div style="${s}">${(el.text||'').replace(/\n/g,'<br>')}</div>`;
+    }
+    return `<div style="${style}">${inner}</div>`;
+  }).join('');
+
+  const tapaHTML = `
+    <div class="pg cover-page">
+      ${bgUrl ? `<img class="cover-img" src="${bgUrl}" alt="" onerror="this.style.display='none'">` : ''}
+      <div class="cover-overlay"></div>
+      ${elsHTML}
+      <div class="cover-hint">Girá la página ›</div>
+      <div class="folio folio-l" style="color:rgba(255,255,255,.25)">1</div>
+    </div>`;
+
+  // Índice (igual que siempre)
+  let indiceContent = '';
+  const grupos = {};
+  articulos.forEach((a,idx) => {
+    const n = a.nivel||'institucional';
+    (grupos[n]=grupos[n]||[]).push({...a,_sp:idx+1});
+  });
+  const nivelesPresentes = NIVEL_ORDER.filter(n=>grupos[n]);
+  if (!articulos.length) {
+    indiceContent = `<div style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:var(--muted);padding:20px 0;text-align:center">Todavía no hay notas en esta edición.</div>`;
+  } else {
+    nivelesPresentes.forEach(nKey => {
+      const niv = NIVELES[nKey]||{label:nKey,color:'#888',icon:'·'};
+      indiceContent += `<div class="indice-grupo" style="color:${niv.color}">${niv.icon}&nbsp; ${niv.label}</div>`;
+      grupos[nKey].forEach(a => {
+        indiceContent += `<button class="indice-row" onclick="irASpread(${a._sp})">
+          <span class="ir-titulo">${a.titulo||'Sin título'}</span>
+          <span class="ir-dots"></span>
+          <span class="ir-pag">${String(a._sp*2+1).padStart(2,'0')}</span>
+        </button>`;
+      });
+    });
+  }
+  const indiceHTML = `
+    <div class="pg" style="border-left:1px solid var(--paper-rule)">
+      <div class="pg-inner">
+        <div class="indice-titulo">Índice</div>
+        <div class="indice-ed">${ed?.titulo||''} &nbsp;·&nbsp; ${ed?.numero?'N.° '+ed.numero:''}</div>
+        ${indiceContent}
+      </div>
+      <div class="folio folio-r">2 · Índice</div>
+    </div>`;
+  return tapaHTML + indiceHTML;
+}
+
 // ── ARTÍCULO ─────────────────────────────────────────────────
 function buildArticulo(art, spreadI) {
   const niv   = NIVELES[art.nivel] || {label:art.nivel,color:'#888',icon:'·'};
@@ -701,8 +775,8 @@ function buildArticulo(art, spreadI) {
   // Imagen principal
   const imgUrl = driveUrl(art.imagenUrl||'');
 
-  // Cuerpo de texto
-  const cuerpoParrafos = buildCuerpo(art);
+  // Cuerpo de texto — rich HTML o texto plano
+  const cuerpoBlocks = buildCuerpo(art);
 
   // PÁGINA IZQUIERDA
   // Layout hero si tiene imagen: foto en la parte superior de la página
@@ -719,7 +793,7 @@ function buildArticulo(art, spreadI) {
           ${art.bajada?`<div class="deck" style="font-size:13px;margin-bottom:8px">${art.bajada}</div>`:''}
           <hr class="rule-double">
           <div class="byline" style="margin-bottom:10px">✍ ${art.autor||''}${art.sala?' · '+art.sala:''} ${art.fecha?' · '+art.fecha:''}</div>
-          <div class="body-text drop-cap">${cuerpoParrafos.slice(0,1).join('')}</div>
+          <div class="body-text drop-cap">${cuerpoBlocks[0]||""}</div>
         </div>
         <div class="folio folio-l">${pgL}</div>
       </div>
@@ -734,7 +808,7 @@ function buildArticulo(art, spreadI) {
           ${art.bajada?`<div class="deck" style="font-size:14px;margin-bottom:10px">${art.bajada}</div>`:''}
           <hr class="rule-double">
           <div class="byline" style="margin-bottom:12px">✍ ${art.autor||''}${art.sala?' · '+art.sala:''} ${art.fecha?' · '+art.fecha:''}</div>
-          <div class="body-text drop-cap">${cuerpoParrafos.slice(0,2).join('')}</div>
+          <div class="body-text drop-cap">${cuerpoBlocks.slice(0,2).join("")}</div>
           ${hasPQ?`<blockquote class="pq">${art.pullquote}<span class="pq-attr">${art.firma?'— '+art.firma:''}</span></blockquote>`:''}
         </div>
         <div class="folio folio-l">${pgL}</div>
@@ -743,13 +817,13 @@ function buildArticulo(art, spreadI) {
   }
 
   // PÁGINA DERECHA: resto del contenido
-  const restoParrafos = cuerpoParrafos.slice(imgUrl?1:2);
+  const restoParrafos = cuerpoBlocks.slice(imgUrl?1:2);
   let paginaDer = `
     <div class="pg art-page-r" style="border-left:1px solid var(--paper-rule)">
       <div class="pg-inner">
         ${hasPQ && imgUrl ? `<blockquote class="pq" style="margin-bottom:12px">${art.pullquote}<span class="pq-attr">${art.firma?'— '+art.firma:''}</span></blockquote>` : ''}
         <div class="body-text clearfix">
-          ${restoParrafos.join('')||''}
+          ${restoParrafos.join("")||""}
         </div>
         ${buildBloques(art)}
         ${buildVideo(art)}
@@ -767,12 +841,13 @@ function buildArticulo(art, spreadI) {
 }
 
 function buildCuerpo(art) {
-  // Soporte de bloques estructurados (nuevo editor) o texto plano (legado)
+  // Soporte de bloques con HTML rico (nuevo editor)
   if (Array.isArray(art.bloques) && art.bloques.length) {
     return art.bloques
-      .filter(b=>b.tipo==='texto'&&b.texto&&b.texto.trim())
-      .map(b => b.texto.split('\n').filter(l=>l.trim()).map(l=>`<p>${esc(l)}</p>`).join(''));
+      .filter(b => b.tipo === 'texto' && b.html && b.html.replace(/<[^>]*>/g,'').trim())
+      .map(b => b.html);
   }
+  // Fallback: texto plano legado
   if (!art.cuerpo) return [];
   return art.cuerpo.split('\n').filter(l=>l.trim()).map(l=>`<p>${esc(l)}</p>`);
 }
@@ -780,24 +855,25 @@ function buildCuerpo(art) {
 function buildBloques(art) {
   if (!Array.isArray(art.bloques)) return '';
   return art.bloques.map(b => {
-    if (b.tipo==='imagen' && b.url) {
+    if (b.tipo === 'imagen' && b.url) {
       const layout = ['left','right'].includes(b.layout) ? 'float-'+b.layout : '';
       return `<figure class="art-img-wrap ${layout}">
         <img src="${driveUrl(b.url)}" alt="${esc(b.caption||'')}" loading="lazy" onerror="this.parentElement.style.display='none'">
         ${b.caption?`<figcaption class="art-img-caption">${esc(b.caption)}</figcaption>`:''}
       </figure>`;
     }
+    if (b.tipo === 'separador') {
+      if (b.estilo === 'ornamental') return `<div style="text-align:center;color:#C9A84C;font-size:16px;margin:16px 0;letter-spacing:8px">✦ ✦ ✦</div>`;
+      if (b.estilo === 'doble') return `<div style="border-top:2.5px solid #1A1A2E;height:5px;border-bottom:1px solid #1A1A2E;margin:14px 0"></div>`;
+      return `<hr style="border:none;border-top:1px solid #D4C9A8;margin:14px 0">`;
+    }
     return '';
   }).join('');
 }
 
 function buildVideo(art) {
-  // Soporte video en bloques
   if (!Array.isArray(art.bloques)) return '';
-  return art.bloques.map(b => {
-    if (b.tipo==='video' && b.url) return embedVideo(b.url, b.caption);
-    return '';
-  }).join('');
+  return art.bloques.filter(b=>b.tipo==='video'&&b.url).map(b=>embedVideo(b.url,b.caption)).join('');
 }
 
 // ── CIERRE ───────────────────────────────────────────────────
