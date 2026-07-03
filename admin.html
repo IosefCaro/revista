@@ -2115,191 +2115,163 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
   const modal = document.getElementById('modal-art');
   const body  = document.getElementById('modal-art-body');
 
+  // Cargar el artículo si solo tenemos el id
   let art = artData;
-  if (artId && (!artData || !artData.titulo)) {
-    const sn = await getDoc(doc(db,'articulos',artId));
+  const loadId = artId || artData?.id;
+  if (loadId && (!art || !art.nivel)) {
+    const sn = await getDoc(doc(db,'articulos',loadId));
     if (sn.exists()) art = {id:sn.id,...sn.data()};
   }
 
   bloques = bloquesDesdeArticulo(art);
 
-  // Cargar ediciones para el selector
+  // Cargar ediciones
   const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
   const ediciones = snEds.docs.map(d => ({id:d.id,...d.data()}));
-  const edOpcs = ediciones.map(e => `<option value="${e.id}" ${art?.edicionId===e.id?'selected':''}>${e.numero?'Ed.'+e.numero+' – ':''}${e.titulo||'Sin título'}</option>`).join('');
 
-  document.getElementById('modal-art-titulo').textContent = modoRevision ? '📋 Revisión de artículo' : (art ? 'Editar artículo' : 'Nuevo artículo');
+  document.getElementById('modal-art-titulo').textContent =
+    modoRevision ? '📋 Revisión de artículo' : (art?.id ? 'Editar artículo' : 'Nuevo artículo');
 
-  // El modal ocupa casi toda la pantalla para tener espacio
-  document.getElementById('modal-art').querySelector('.mbox').style.maxWidth = '1100px';
-  document.getElementById('modal-art').querySelector('.mbox').style.maxHeight = '96vh';
-  document.getElementById('modal-art').querySelector('.mbox').style.height = '96vh';
-  document.getElementById('modal-art').querySelector('.mbox').style.display = 'flex';
-  document.getElementById('modal-art').querySelector('.mbox').style.flexDirection = 'column';
+  // Modal pantalla completa
+  const mbox = document.getElementById('modal-art').querySelector('.mbox');
+  Object.assign(mbox.style, {maxWidth:'1100px',maxHeight:'96vh',height:'96vh',display:'flex',flexDirection:'column'});
+  Object.assign(body.style, {padding:'0',flex:'1',overflow:'hidden',display:'flex',flexDirection:'column'});
 
-  body.style.padding = '0';
-  body.style.flex = '1';
-  body.style.overflow = 'hidden';
-  body.style.display = 'flex';
-  body.style.flexDirection = 'column';
-
+  // ── Generar HTML de la estructura (sin valores del artículo) ──
   body.innerHTML = `
-    ${modoRevision ? `
-      <div style="background:var(--warn)18;border-bottom:1px solid var(--warn)44;padding:10px 16px;font-size:12px;color:var(--warn);flex-shrink:0">
-        ⏳ Enviado por <strong>${art?.docenteNombre||art?.docenteEmail||'—'}</strong> ${art?.creadoEn ? '· ' + tiempoDesde(art.creadoEn) : ''}
-        — Revisá, editá si necesario y luego publicá.
-      </div>
-    ` : ''}
+    <div id="modal-art-banner" style="display:none;background:rgba(200,154,76,.15);border-bottom:1px solid rgba(200,154,76,.3);padding:10px 16px;font-size:12px;color:var(--warn);flex-shrink:0"></div>
 
-    <!-- LAYOUT: editor izq, preview der -->
-    <div style="flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden">
+    <div style="flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden;min-height:0">
 
-      <!-- COLUMNA EDITOR -->
-      <div class="editor-col" style="padding:18px 20px;display:flex;flex-direction:column;gap:13px">
+      <!-- COLUMNA IZQUIERDA: formulario -->
+      <div class="editor-col" style="overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
 
-        <!-- Metadatos -->
         <div class="grid3">
           <div class="field">
             <label class="lbl">Nivel</label>
             <select class="ai" id="art-nivel" onchange="actualizarPreviewEditor()">
-              ${Object.entries(NIVELES).map(([k,v])=>`<option value="${k}" ${art?.nivel===k?'selected':''}>${v.icon} ${v.label}</option>`).join('')}
+              ${Object.entries(NIVELES).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join('')}
             </select>
           </div>
           <div class="field">
             <label class="lbl">Tipo</label>
             <select class="ai" id="art-tipo">
-              ${['noticia','galeria','proyecto','evento','comunicado','aviso'].map(t=>`<option value="${t}" ${art?.tipo===t?'selected':''}>${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
+              ${['noticia','galeria','proyecto','evento','comunicado','aviso'].map(t=>`<option value="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
             </select>
           </div>
           <div class="field">
-            <label class="lbl">Orden en edición</label>
-            <input class="ai" type="number" id="art-orden" value="${art?.orden||''}" placeholder="1, 2, 3…">
+            <label class="lbl">Orden</label>
+            <input class="ai" type="number" id="art-orden" placeholder="1, 2, 3…">
           </div>
         </div>
 
         <div class="field">
           <label class="lbl">Título</label>
-          <input class="ai" id="art-titulo" value="${esc(art?.titulo||'')}" placeholder="Título del artículo…" oninput="actualizarPreviewEditor()">
+          <input class="ai" id="art-titulo" placeholder="Título del artículo…" oninput="actualizarPreviewEditor()">
         </div>
 
         <div class="field">
           <label class="lbl">Bajada / Resumen</label>
-          <textarea class="ai" id="art-bajada" rows="2" placeholder="Descripción breve que aparece debajo del título…" oninput="actualizarPreviewEditor()">${esc(art?.bajada||'')}</textarea>
+          <textarea class="ai" id="art-bajada" rows="2" placeholder="Descripción breve…" oninput="actualizarPreviewEditor()"></textarea>
         </div>
 
-        <!-- Contenido -->
-        <div class="field" style="flex:1">
+        <div class="field" style="flex:1;min-height:0">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px">
             <label class="lbl">Contenido</label>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="abrirModalPlantillas()" style="font-size:9.5px">📄 Usar plantilla</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="abrirModalPlantillas()" style="font-size:9.5px">📄 Plantilla</button>
           </div>
           <div class="bloques-list" id="bloques-editor"></div>
           <div class="bloque-add-row" style="margin-top:8px">
             <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('texto')">＋ Texto</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('imagen')">＋ Foto</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('video')">＋ Video</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('separador')">— Separador</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="agregarBloque('separador')">— Sep.</button>
           </div>
         </div>
 
         <div class="grid2">
-          <div class="field"><label class="lbl">Autor</label><input class="ai" id="art-autor" value="${esc(art?.autor||'')}" placeholder="Nombre del autor"></div>
-          <div class="field"><label class="lbl">Sala / Grado</label><input class="ai" id="art-sala" value="${esc(art?.sala||'')}" placeholder="Ej: 3.° Grado A"></div>
+          <div class="field"><label class="lbl">Autor</label><input class="ai" id="art-autor" placeholder="Nombre del autor"></div>
+          <div class="field"><label class="lbl">Sala / Grado</label><input class="ai" id="art-sala" placeholder="3.° Grado A"></div>
         </div>
 
         <div class="grid2">
-          <div class="field"><label class="lbl">Fecha</label><input class="ai" id="art-fecha" value="${esc(art?.fecha||'')}" placeholder="Ej: 10 jul 2026"></div>
+          <div class="field"><label class="lbl">Fecha</label><input class="ai" id="art-fecha" placeholder="10 jul 2026"></div>
           <div class="field">
             <label class="lbl">Edición</label>
             <select class="ai" id="art-edicion">
               <option value="">Sin asignar</option>
-              ${edOpcs}
+              ${ediciones.map(e=>`<option value="${e.id}">${e.numero?'Ed.'+e.numero+' – ':''}${esc(e.titulo||'Sin título')}</option>`).join('')}
             </select>
           </div>
         </div>
 
       </div>
 
-      <!-- COLUMNA DERECHA — Canvas de página interactivo -->
-      <div class="preview-col" style="background:var(--bg);flex-direction:column;overflow:hidden">
+      <!-- COLUMNA DERECHA: canvas de página -->
+      <div style="border-left:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden;background:var(--bg)">
 
-        <!-- Header con tabs -->
-        <div class="preview-col-header" style="flex-shrink:0">
+        <div class="preview-col-header" style="flex-shrink:0;background:#1e1e30">
           <span>Canvas de página</span>
-          <div style="display:flex;gap:6px;align-items:center">
-            <button class="prev-tab on" onclick="artCanvasSetTab('canvas')" id="actab-canvas" style="font-size:8px;padding:4px 9px">🖼 Canvas</button>
-            <button class="prev-tab"    onclick="artCanvasSetTab('lista')"  id="actab-lista"  style="font-size:8px;padding:4px 9px">☰ Lista</button>
+          <div style="display:flex;gap:4px">
+            <button class="prev-tab on" onclick="artCanvasSetTab('canvas')" id="actab-canvas" style="font-size:8px;padding:4px 8px">🖼 Canvas</button>
+            <button class="prev-tab"    onclick="artCanvasSetTab('lista')"  id="actab-lista"  style="font-size:8px;padding:4px 8px">☰ Lista</button>
           </div>
         </div>
 
-        <!-- CANVAS — doble página drag & drop -->
-        <div id="artcan-canvas" style="flex:1;overflow-y:auto;background:#1a1a28;display:flex;flex-direction:column;align-items:center;padding:12px 8px;gap:8px">
-
-          <!-- Leyenda -->
-          <div style="font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;text-align:center;flex-shrink:0">
-            Arrastrá los bloques · clic = seleccionar · doble clic = editar texto
+        <!-- CANVAS -->
+        <div id="artcan-canvas" style="flex:1;overflow-y:auto;background:#1a1a28;display:flex;flex-direction:column;align-items:center;padding:10px 6px;gap:8px">
+          <div style="font-size:8px;color:rgba(255,255,255,.28);letter-spacing:1px;text-transform:uppercase;text-align:center;flex-shrink:0">
+            Arrastrá los bloques · clic = seleccionar · doble clic = editar
           </div>
-
-          <!-- Libro doble página -->
-          <div id="artcan-book" style="display:flex;width:100%;gap:0;box-shadow:0 12px 40px rgba(0,0,0,.6);flex-shrink:0">
-
-            <!-- Página izquierda -->
-            <div id="artcan-pg-l" style="width:50%;min-height:340px;background:#FAF7F1;position:relative;overflow:hidden">
-              <div style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.4;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.75%22 numOctaves=%224%22/%3E%3C/filter%3E%3Crect width=%22200%22 height=%22200%22 filter=%22url(%23n)%22 opacity=%22.02%22/%3E%3C/svg%3E')"></div>
-              <div style="position:absolute;right:0;top:0;bottom:0;width:14px;background:linear-gradient(to left,rgba(0,0,0,.15),transparent);pointer-events:none;z-index:5"></div>
-              <!-- Contenido fijo: encabezado del artículo -->
-              <div id="artcan-header" style="padding:12px 11px 0;position:relative;z-index:2">
+          <div id="artcan-book" style="display:flex;width:100%;gap:0;box-shadow:0 10px 32px rgba(0,0,0,.6);flex-shrink:0">
+            <!-- Pág izq -->
+            <div id="artcan-pg-l" style="width:50%;min-height:320px;background:#FAF7F1;position:relative;overflow:hidden">
+              <div style="position:absolute;right:0;top:0;bottom:0;width:12px;background:linear-gradient(to left,rgba(0,0,0,.14),transparent);pointer-events:none;z-index:5"></div>
+              <div id="artcan-header" style="padding:11px 10px 0;position:relative;z-index:2">
                 <div class="prev-kicker" id="artcan-kicker" style="color:#C9A84C">■ Nivel</div>
-                <div class="prev-titulo" id="artcan-titulo" style="font-size:13px">Título del artículo</div>
+                <div class="prev-titulo" id="artcan-titulo" style="font-size:12px">Título</div>
                 <div class="prev-bajada" id="artcan-bajada" style="display:none"></div>
                 <div class="prev-rule"></div>
                 <div class="prev-byline" id="artcan-byline"></div>
               </div>
-              <!-- Bloques arrastrables página izquierda -->
-              <div id="artcan-drop-l" class="artcan-dropzone" style="padding:6px 11px 18px;position:relative;z-index:2;min-height:80px" ondragover="artcanDragOver(event,'l')" ondrop="artcanDrop(event,'l')" ondragleave="artcanDragLeave(event)">
+              <div id="artcan-drop-l" class="artcan-dropzone" style="padding:5px 10px 16px;position:relative;z-index:2;min-height:60px"
+                ondragover="artcanDragOver(event,'l')" ondrop="artcanDrop(event,'l')" ondragleave="artcanDragLeave(event)">
                 <div class="artcan-empty-hint" id="artcan-hint-l">Arrastrá bloques aquí</div>
               </div>
               <div class="prev-folio prev-folio-l" style="z-index:3" id="artcan-folio-l">3</div>
             </div>
-
             <!-- Lomo -->
-            <div style="width:6px;flex-shrink:0;background:linear-gradient(to right,rgba(0,0,0,.2),rgba(201,168,76,.7) 30%,rgba(245,237,208,.9) 50%,rgba(201,168,76,.7) 70%,rgba(0,0,0,.1) 100%);box-shadow:0 0 6px rgba(201,168,76,.3)"></div>
-
-            <!-- Página derecha -->
-            <div id="artcan-pg-r" style="width:50%;min-height:340px;background:#FAF7F1;position:relative;overflow:hidden">
-              <div style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.4;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Cfilter id=%22n%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.75%22 numOctaves=%224%22/%3E%3C/filter%3E%3Crect width=%22200%22 height=%22200%22 filter=%22url(%23n)%22 opacity=%22.02%22/%3E%3C/svg%3E')"></div>
-              <div style="position:absolute;left:0;top:0;bottom:0;width:14px;background:linear-gradient(to right,rgba(0,0,0,.12),transparent);pointer-events:none;z-index:5"></div>
-              <!-- Bloques arrastrables página derecha -->
-              <div id="artcan-drop-r" class="artcan-dropzone" style="padding:10px 11px 18px;position:relative;z-index:2;min-height:200px" ondragover="artcanDragOver(event,'r')" ondrop="artcanDrop(event,'r')" ondragleave="artcanDragLeave(event)">
+            <div style="width:5px;flex-shrink:0;background:linear-gradient(to right,rgba(0,0,0,.2),rgba(201,168,76,.7) 30%,rgba(245,237,208,.9) 50%,rgba(201,168,76,.7) 70%,rgba(0,0,0,.1) 100%)"></div>
+            <!-- Pág der -->
+            <div id="artcan-pg-r" style="width:50%;min-height:320px;background:#FAF7F1;position:relative;overflow:hidden">
+              <div style="position:absolute;left:0;top:0;bottom:0;width:12px;background:linear-gradient(to right,rgba(0,0,0,.1),transparent);pointer-events:none;z-index:5"></div>
+              <div id="artcan-drop-r" class="artcan-dropzone" style="padding:9px 10px 16px;position:relative;z-index:2;min-height:200px"
+                ondragover="artcanDragOver(event,'r')" ondrop="artcanDrop(event,'r')" ondragleave="artcanDragLeave(event)">
                 <div class="artcan-empty-hint" id="artcan-hint-r">Arrastrá bloques aquí</div>
               </div>
               <div class="prev-folio prev-folio-r" style="z-index:3" id="artcan-folio-r">4</div>
             </div>
-
           </div>
-
-          <!-- Botones agregar al canvas -->
-          <div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;flex-shrink:0">
-            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('texto')" style="font-size:9px">＋ Texto</button>
-            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('imagen')" style="font-size:9px">＋ Foto</button>
-            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('separador')" style="font-size:9px">— Sep.</button>
-            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('pullquote')" style="font-size:9px;color:var(--gold)">« Cita »</button>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;flex-shrink:0">
+            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('texto')" style="font-size:8.5px">＋ Texto</button>
+            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('imagen')" style="font-size:8.5px">＋ Foto</button>
+            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('separador')" style="font-size:8.5px">— Sep.</button>
+            <button class="btn btn-ghost btn-sm" onclick="artcanAgregar('pullquote')" style="font-size:8.5px;color:var(--gold)">« Cita »</button>
           </div>
         </div>
 
-        <!-- LISTA — lista lineal de bloques (vista alternativa) -->
+        <!-- LISTA -->
         <div id="artcan-lista" style="display:none;flex:1;overflow-y:auto;padding:10px">
-          <div style="font-size:9px;color:var(--muted);text-align:center;padding:8px 0 12px">Lista de bloques — arrastrá para reordenar</div>
           <div id="artcan-lista-items"></div>
         </div>
 
-        <!-- Panel propiedades del bloque seleccionado -->
-        <div id="artcan-props" style="border-top:1px solid var(--rule);background:var(--dim);flex-shrink:0;max-height:200px;overflow-y:auto">
-          <div style="padding:8px 12px;font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);background:var(--card)">
-            Propiedades del bloque seleccionado
+        <!-- Props del bloque seleccionado -->
+        <div id="artcan-props" style="border-top:1px solid var(--rule);background:var(--dim);flex-shrink:0;max-height:180px;overflow-y:auto">
+          <div style="padding:7px 12px;font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);background:var(--card)">
+            Propiedades del bloque
           </div>
-          <div id="artcan-props-body" style="padding:10px 12px">
-            <div style="font-size:11px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0">Seleccioná un bloque en el canvas</div>
+          <div id="artcan-props-body" style="padding:9px 12px">
+            <div style="font-size:11px;color:var(--muted);font-style:italic;text-align:center">Seleccioná un bloque</div>
           </div>
         </div>
 
@@ -2308,30 +2280,57 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
 
     </div>
 
-    <!-- STATUS BAR + ACCIONES -->
+    <!-- STATUS BAR -->
     ${htmlStatusBar(art?.id||'')}
 
-    <div style="padding:12px 18px;border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;flex-shrink:0">
+    <!-- ACCIONES -->
+    <div style="padding:11px 18px;border-top:1px solid var(--rule);display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;flex-shrink:0">
       <div style="display:flex;gap:8px">
-        ${modoRevision ? `
-          <button class="btn btn-danger btn-sm" onclick="rechazarArticulo('${art?.id}')">Rechazar</button>
-        ` : `
-          <button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>
-        `}
-        <button class="btn btn-ghost btn-sm" onclick="autoguardar()" id="btn-autoguardar">💾 Guardar borrador</button>
+        <div id="modal-art-btn-izq"></div>
+        <button class="btn btn-ghost btn-sm" onclick="autoguardar()" id="btn-autoguardar">💾 Borrador</button>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-gold btn-sm" onclick="guardarArticulo('${art?.id||''}','publicado')">✅ Guardar y publicar</button>
+        <div id="modal-art-btn-der"></div>
       </div>
     </div>
   `;
 
+  // ── Llenar valores con .value para evitar problemas de escaping ──
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || ''; };
+
+  setVal('art-nivel',   art?.nivel   || 'institucional');
+  setVal('art-tipo',    art?.tipo    || 'noticia');
+  setVal('art-orden',   art?.orden   || '');
+  setVal('art-titulo',  art?.titulo  || '');
+  setVal('art-bajada',  art?.bajada  || '');
+  setVal('art-autor',   art?.autor   || '');
+  setVal('art-sala',    art?.sala    || '');
+  setVal('art-fecha',   art?.fecha   || '');
+  setVal('art-edicion', art?.edicionId || '');
+
+  // Banner revisión
+  const banner = document.getElementById('modal-art-banner');
+  if (modoRevision && banner) {
+    banner.style.display = '';
+    banner.innerHTML = `⏳ Enviado por <strong>${esc(art?.docenteNombre||art?.docenteEmail||'—')}</strong>${art?.creadoEn ? ' · ' + tiempoDesde(art.creadoEn) : ''} — Revisá, editá si es necesario y luego publicá.`;
+  }
+
+  // Botones de acción según modo
+  const artId2 = art?.id || '';
+  document.getElementById('modal-art-btn-izq').innerHTML = modoRevision
+    ? `<button class="btn btn-danger btn-sm" onclick="rechazarArticulo('${artId2}')">Rechazar</button>`
+    : `<button class="btn btn-ghost btn-sm" onclick="cerrarModal('modal-art')">Cancelar</button>`;
+
+  document.getElementById('modal-art-btn-der').innerHTML =
+    `<button class="btn btn-gold btn-sm" onclick="guardarArticulo('${artId2}','publicado')">✅ Guardar y publicar</button>`;
+
+  // Inicializar editor
+  artIdActual = artId2 || null;
+  cambiosPendientes = false;
+  iniciarAutoguardado(artId2 || null);
   renderBloquesEditor();
   abrirModal('modal-art');
-  // Iniciar autoguardado
-  artIdActual = art?.id || null;
-  cambiosPendientes = false;
-  iniciarAutoguardado(art?.id || null);
 }
 
 window.guardarArticulo = async function(artId, estado) {
