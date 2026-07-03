@@ -2254,11 +2254,37 @@ window.toast = function(msg, type) {
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { cerrarModal('modal-art'); cerrarModal('modal-edicion'); } });
 
 // ═══ DISEÑAR TAPA ════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// EDITOR DE TAPA — DRAG & DROP INTEGRADO
+// ═══════════════════════════════════════════════════════════════
+
+// Estado del editor de tapa
+let tapaEls     = [];     // elementos en el canvas
+let tapaSelId   = null;   // elemento seleccionado
+let tapaEdId    = null;   // edición activa
+let tapaDragSt  = null;   // estado de drag
+let tapaResSt   = null;   // estado de resize
+let tapaIdCnt   = 0;
+
+const TAPA_TIPOS = {
+  titulo:   { label:'Título',        icon:'✦', d:{ text:'Revista\nInstitucional', fs:28, color:'#ffffff', fw:'900', fi:'normal', ta:'left',  w:75, h:22, x:5,  y:55 }},
+  subtitulo:{ label:'Subtítulo',     icon:'✧', d:{ text:'"Formamos Iehudim\níntegros para el mañana"', fs:12, color:'rgba(255,255,255,.78)', fw:'400', fi:'italic',ta:'left',  w:72, h:14, x:5, y:72 }},
+  badge:    { label:'Edición/Fecha', icon:'▪', d:{ text:'Edición 12 · Junio 2026', fs:8,  color:'#C9A84C', fw:'900', fi:'normal',ta:'left',  w:62, h:5,  x:5,  y:50 }},
+  hebreo:   { label:'Texto hebreo',  icon:'✡', d:{ text:'בונים יהודים שלמים למחר', fs:10, color:'rgba(201,168,76,.55)', fw:'400', fi:'normal',ta:'right', w:62, h:7,  x:33, y:82 }},
+  linea:    { label:'Línea dorada',  icon:'—', d:{ w:80, h:1.2, x:5, y:48 }},
+  meta:     { label:'Metadato',      icon:'·', d:{ text:'Semana del 2 de julio · 8 notas', fs:9, color:'rgba(255,255,255,.5)', fw:'400', fi:'normal',ta:'left',w:70,h:4,x:5,y:88 }},
+  logo:     { label:'Logo',          icon:'⬛',d:{ src:'https://i.ibb.co/hF7Sqzw5/Logo-blanco.png', w:16, h:10, x:5, y:5 }},
+  estrella: { label:'Estrella fondo',icon:'✡',d:{ fs:220, color:'rgba(201,168,76,.06)', w:55, h:55, x:22, y:3 }},
+  imagen:   { label:'Imagen de fondo',icon:'🖼',d:{ src:'', w:100, h:100, x:0, y:0 }},
+};
+
+function tapaBid() { return 'tp'+(++tapaIdCnt); }
+
+// ── RENDER PRINCIPAL ─────────────────────────────────────────
 async function renderTapa() {
   const pg = document.getElementById('page-content');
   pg.innerHTML = '<div class="loading-spin"></div>';
 
-  // Cargar ediciones
   const snEds = await getDocs(query(collection(db,'ediciones'), orderBy('fechaInicio','desc')));
   const ediciones = snEds.docs.map(d=>({id:d.id,...d.data()}));
   if (!ediciones.length) {
@@ -2266,167 +2292,596 @@ async function renderTapa() {
     return;
   }
 
-  const firstEd = ediciones[0];
   pg.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;max-width:900px">
+  <style>
+    /* ── ESTILOS EDITOR DE TAPA ── */
+    .tapa-editor{display:grid;grid-template-columns:1fr 260px;gap:0;height:calc(100vh - 110px);overflow:hidden}
+    .tapa-canvas-col{
+      display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+      background:#1a1a28;gap:10px;padding:16px;overflow:hidden;
+    }
+    .tapa-topbar{
+      display:flex;align-items:center;gap:10px;width:100%;max-width:500px;flex-wrap:wrap;
+    }
+    .tapa-wrap{
+      position:relative;
+      height:calc(100% - 80px);
+      aspect-ratio:3/4;
+      box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,.15);
+      flex-shrink:0;
+    }
+    #tapa-canvas{
+      position:absolute;inset:0;
+      background:linear-gradient(165deg,#0E1628 0%,#1A2848 60%,#1E3060 100%);
+      overflow:hidden;cursor:default;user-select:none;
+    }
+    .tc-grid{position:absolute;inset:0;pointer-events:none;
+      background-image:repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(201,168,76,.05) 27px,rgba(201,168,76,.05) 28px),
+                       repeating-linear-gradient(90deg,transparent,transparent 27px,rgba(201,168,76,.05) 27px,rgba(201,168,76,.05) 28px)}
+    .tc-overlay{position:absolute;inset:0;pointer-events:none;
+      background:linear-gradient(180deg,rgba(14,22,40,.08) 0%,rgba(14,22,40,.38) 50%,rgba(14,22,40,.92) 100%)}
+    .tapa-hint{font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;text-align:center}
 
-      <!-- FORM -->
-      <div>
-        <div style="margin-bottom:16px">
-          <label class="lbl">Edición a configurar</label>
-          <select class="ai" id="tapa-ed-select" onchange="cargarDatosTapa(this.value)" style="margin-top:4px">
-            ${ediciones.map(e=>`<option value="${e.id}">${e.numero?'Ed. '+e.numero+' — ':''}${e.titulo||'Sin título'}</option>`).join('')}
-          </select>
-        </div>
+    /* Elementos */
+    .tel{position:absolute;cursor:move;touch-action:none}
+    .tel .sel-b{position:absolute;inset:-3px;border:1.5px dashed rgba(201,168,76,0);border-radius:3px;pointer-events:none;transition:border-color .12s}
+    .tel:hover .sel-b{border-color:rgba(201,168,76,.45)}
+    .tel.sel .sel-b{border-color:#C9A84C!important}
+    .trh{position:absolute;width:8px;height:8px;background:#C9A84C;border:1.5px solid #fff;border-radius:2px;opacity:0;z-index:20}
+    .tel.sel .trh{opacity:1}
+    .trh-tl{top:-4px;left:-4px;cursor:nwse-resize}
+    .trh-tr{top:-4px;right:-4px;cursor:nesw-resize}
+    .trh-bl{bottom:-4px;left:-4px;cursor:nesw-resize}
+    .trh-br{bottom:-4px;right:-4px;cursor:nwse-resize}
 
-        <div class="card cp" style="margin-bottom:14px">
-          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Imagen de portada</div>
-          <div class="field">
-            <label class="lbl">URL de imagen (Google Drive u otro)</label>
-            <input class="ai" id="tapa-img" placeholder="https://drive.google.com/file/d/…/view">
-            <span style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">
-              Usá Google Drive: subí la imagen → Compartir → "Cualquier persona con el enlace" → copiá el link.
-            </span>
-          </div>
-          <div style="margin-top:10px">
-            <img id="tapa-img-preview" src="" alt="" style="display:none;width:100%;max-height:180px;object-fit:cover;border-radius:6px;margin-top:8px">
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="previewTapaImg()" style="margin-top:10px">👁 Previsualizar imagen</button>
-        </div>
+    /* Panel lateral */
+    .tapa-panel{background:var(--navy);border-left:1px solid var(--rule);display:flex;flex-direction:column;overflow:hidden}
+    .tapa-panel-tabs{display:flex;border-bottom:1px solid var(--rule);flex-shrink:0}
+    .tptab{flex:1;padding:9px 4px;border:none;background:none;cursor:pointer;font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;transition:all .12s;font-family:'Lato',sans-serif}
+    .tptab.on{color:var(--gold);border-bottom-color:var(--gold)}
+    .tapa-panel-body{flex:1;overflow-y:auto}
+    .tpc{display:none}.tpc.on{display:block}
+    .tps{border-bottom:1px solid var(--ruleDim)}
+    .tps-t{padding:7px 13px;font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);background:var(--dim)}
+    .tps-b{padding:9px 13px}
+    .tadd-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px 13px}
+    .tadd-btn{padding:6px 5px;border:1px solid var(--rule);background:var(--bg);border-radius:5px;cursor:pointer;font-size:9.5px;font-family:'Lato',sans-serif;color:var(--muted);text-align:left;transition:all .12s}
+    .tadd-btn:hover{border-color:var(--gold)66;color:var(--gold);background:rgba(201,168,76,.06)}
+    .teli{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:4px;cursor:pointer;font-size:11px;color:var(--muted);border:1px solid transparent;margin-bottom:2px;transition:all .1s}
+    .teli:hover{background:var(--card)}
+    .teli.on{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.3);color:var(--gold)}
+    .teli-del{margin-left:auto;opacity:0;cursor:pointer;font-size:14px}
+    .teli:hover .teli-del{opacity:1}
+    .tp-no-sel{padding:16px 13px;font-size:11px;color:var(--muted);text-align:center;font-style:italic;line-height:1.6}
+    .trow{display:flex;align-items:center;gap:7px;margin-bottom:7px}
+    .trow:last-child{margin-bottom:0}
+    .trow-lbl{font-size:9px;color:var(--muted);width:44px;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase}
+    .trow input[type=range]{flex:1;accent-color:var(--gold)}
+    .trow-val{font-size:9.5px;color:var(--ink);min-width:30px;text-align:right}
+    .trow input[type=color]{width:26px;height:24px;border:1px solid var(--rule);border-radius:4px;padding:1px;cursor:pointer;background:none}
+    .trow select,.trow input[type=text],.trow textarea{flex:1;padding:4px 7px;border:1px solid var(--rule);border-radius:4px;font-size:11px;font-family:'Lato',sans-serif;color:var(--ink);background:var(--bg);outline:none}
+    .trow select:focus,.trow input[type=text]:focus,.trow textarea:focus{border-color:var(--gold)88}
+    .trow textarea{resize:vertical;min-height:44px}
+    .tact-btn{display:block;width:100%;padding:7px;border:1px solid var(--rule);background:var(--bg);border-radius:5px;cursor:pointer;font-size:10px;font-family:'Lato',sans-serif;color:var(--muted);margin-bottom:5px;transition:all .12s;text-align:center}
+    .tact-btn:hover{border-color:var(--gold)55;color:var(--gold)}
+    .tact-btn.danger{border-color:var(--err)55;color:var(--err)}
+    .tact-btn.danger:hover{border-color:var(--err)}
+    .tact-btn.primary{border-color:var(--gold);background:var(--gold)22;color:var(--gold);font-weight:700}
+  </style>
 
-        <div class="card cp" style="margin-bottom:14px">
-          <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px">Textos de la portada</div>
-          <div style="display:flex;flex-direction:column;gap:13px">
-            <div class="field"><label class="lbl">Título principal</label><input class="ai" id="tapa-titulo" placeholder="Ej: Revista Institucional Iosef Caro"></div>
-            <div class="field"><label class="lbl">Subtítulo / Bajada</label><textarea class="ai" id="tapa-subtitulo" rows="2" placeholder="Ej: Semana de integración y festejo del Día del Maestro"></textarea></div>
-            <div class="grid2">
-              <div class="field"><label class="lbl">Mes</label><input class="ai" id="tapa-mes" placeholder="JULIO"></div>
-              <div class="field"><label class="lbl">Año</label><input class="ai" id="tapa-anio" placeholder="2026"></div>
-            </div>
-            <div class="field"><label class="lbl">Institución (línea pequeña)</label><input class="ai" id="tapa-inst" placeholder="Colegio Rabino Iosef Caro" value="Colegio Rabino Iosef Caro"></div>
-            <div class="field"><label class="lbl">Texto en hebreo (esquina)</label><input class="ai" id="tapa-hebreo" placeholder="בס״ד" value="בס״ד"></div>
-            <div class="field"><label class="lbl">URL del logo (opcional)</label><input class="ai" id="tapa-logo" placeholder="https://…" value="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png"></div>
-          </div>
-        </div>
+  <div class="tapa-editor">
 
-        <div style="display:flex;gap:10px">
-          <button class="btn btn-gold" onclick="guardarTapa()">💾 Guardar tapa</button>
-          <button class="btn btn-ghost" onclick="previsualizarRevista()">👁 Ver revista</button>
+    <!-- CANVAS -->
+    <div class="tapa-canvas-col">
+      <div class="tapa-topbar">
+        <select class="ai" id="tapa-ed-sel" onchange="tapaCargarEdicion(this.value)" style="flex:1;max-width:280px">
+          ${ediciones.map(e=>`<option value="${e.id}">${e.numero?'Ed. '+e.numero+' — ':''}${e.titulo||'Sin título'}</option>`).join('')}
+        </select>
+        <button class="btn btn-gold btn-sm" onclick="tapaGuardar()">💾 Guardar tapa</button>
+        <button class="btn btn-ghost btn-sm" onclick="tapaPrevisualizarRevista()">👁 Ver revista</button>
+      </div>
+      <div class="tapa-wrap">
+        <div id="tapa-canvas">
+          <div class="tc-grid"></div>
+          <div class="tc-overlay" id="tc-overlay"></div>
         </div>
       </div>
+      <div class="tapa-hint">Clic = seleccionar · Drag = mover · Esquinas doradas = redimensionar · Doble clic = editar texto</div>
+    </div>
 
-      <!-- PREVIEW -->
-      <div>
-        <div style="font-size:8px;font-weight:900;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Previsualización</div>
-        <div id="tapa-preview-box" style="
-          background:linear-gradient(160deg,#0E1628 0%,#1A2848 60%,#1E3060 100%);
-          border-radius:8px;overflow:hidden;position:relative;height:460px;
-          border:1px solid rgba(201,168,76,.2);box-shadow:0 20px 50px rgba(0,0,0,.4);
-        ">
-          <img id="tapa-prev-img" src="" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
-          <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,22,40,.1) 0%,rgba(14,22,40,.5) 40%,rgba(14,22,40,.96) 100%)"></div>
-          <div style="position:absolute;top:-10px;right:-10px;font-size:220px;line-height:.8;font-family:'Playfair Display',serif;color:rgba(201,168,76,.05);pointer-events:none" id="tapa-prev-hebreo">בס״ד</div>
-          <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 20px 22px;color:#fff">
-            <div style="display:flex;align-items:center;gap:8px;padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid rgba(201,168,76,.25)">
-              <img id="tapa-prev-logo" src="https://i.ibb.co/hF7Sqzw5/Logo-blanco.png" alt="" style="height:18px;opacity:.85" onerror="this.style.display='none'">
-              <span id="tapa-prev-inst" style="font-family:'Lato',sans-serif;font-size:7px;letter-spacing:2px;color:rgba(201,168,76,.7);text-transform:uppercase">Colegio Rabino Iosef Caro</span>
+    <!-- PANEL LATERAL -->
+    <div class="tapa-panel">
+      <div class="tapa-panel-tabs">
+        <button class="tptab on" onclick="tapaPanelTab('elementos')" id="tptab-elementos">Elementos</button>
+        <button class="tptab" onclick="tapaPanelTab('props')"    id="tptab-props">Props.</button>
+        <button class="tptab" onclick="tapaPanelTab('fondo')"    id="tptab-fondo">Fondo</button>
+      </div>
+      <div class="tapa-panel-body">
+
+        <!-- TAB ELEMENTOS -->
+        <div class="tpc on" id="tpc-elementos">
+          <div class="tps"><div class="tps-t">Agregar</div>
+            <div class="tadd-grid">
+              <button class="tadd-btn" onclick="tapaAddEl('titulo')">✦ Título</button>
+              <button class="tadd-btn" onclick="tapaAddEl('subtitulo')">✧ Subtítulo</button>
+              <button class="tadd-btn" onclick="tapaAddEl('badge')">▪ Edición/Fecha</button>
+              <button class="tadd-btn" onclick="tapaAddEl('hebreo')">✡ Hebreo</button>
+              <button class="tadd-btn" onclick="tapaAddEl('linea')">— Línea dorada</button>
+              <button class="tadd-btn" onclick="tapaAddEl('meta')">· Metadato</button>
+              <button class="tadd-btn" onclick="tapaAddEl('logo')">⬛ Logo</button>
+              <button class="tadd-btn" onclick="tapaAddEl('estrella')">✡ Fondo ✡</button>
+              <button class="tadd-btn" onclick="tapaAddEl('imagen')" style="grid-column:1/-1">🖼 Imagen de fondo</button>
             </div>
-            <div id="tapa-prev-badge" style="font-family:'Lato',sans-serif;font-size:8px;font-weight:900;letter-spacing:3px;text-transform:uppercase;color:#C9A84C;margin-bottom:6px">Edición — JULIO 2026</div>
-            <div id="tapa-prev-titulo" style="font-family:'Playfair Display',serif;font-weight:900;font-size:22px;line-height:1.04;margin-bottom:6px">Revista Institucional</div>
-            <div id="tapa-prev-subtitulo" style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5">"Formamos Iehudim íntegros para el mañana"</div>
+          </div>
+          <div class="tps" style="border:none"><div class="tps-t">Capas</div>
+            <div id="tapa-el-list" style="padding:6px 8px">
+              <div class="tp-no-sel">Agregá elementos con los botones de arriba</div>
+            </div>
           </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center">La previsualización se actualiza al escribir</div>
+
+        <!-- TAB PROPS -->
+        <div class="tpc" id="tpc-props">
+          <div id="tapa-props-body"><div class="tp-no-sel">Seleccioná un elemento en la tapa para editar sus propiedades</div></div>
+        </div>
+
+        <!-- TAB FONDO -->
+        <div class="tpc" id="tpc-fondo">
+          <div class="tps"><div class="tps-t">Imagen de fondo</div>
+            <div class="tps-b">
+              <div style="margin-bottom:9px">
+                <div class="lbl" style="margin-bottom:4px">URL (Google Drive u otro)</div>
+                <input class="ai" id="tapa-bg-url" placeholder="https://drive.google.com/file/d/…" oninput="tapaBgUrl(this.value)" style="font-size:12px;padding:7px 9px">
+              </div>
+              <div class="trow">
+                <span class="trow-lbl">Overlay</span>
+                <input type="range" min="0" max="100" value="40" step="1"
+                  oninput="tapaSetOverlay(this.value/100);document.getElementById('tov').textContent=this.value+'%'">
+                <span class="trow-val" id="tov">40%</span>
+              </div>
+            </div>
+          </div>
+          <div class="tps"><div class="tps-t">Gradiente de fondo</div>
+            <div class="tps-b">
+              <div class="trow"><span class="trow-lbl">Superior</span><input type="color" value="#0E1628" oninput="tapaBgGrad()"><span class="trow-val" id="bgc1">#0E1628</span></div>
+              <div class="trow"><span class="trow-lbl">Medio</span>  <input type="color" value="#1A2848" oninput="tapaBgGrad()"><span class="trow-val" id="bgc2">#1A2848</span></div>
+              <div class="trow"><span class="trow-lbl">Inferior</span><input type="color" value="#1E3060" oninput="tapaBgGrad()"><span class="trow-val" id="bgc3">#1E3060</span></div>
+            </div>
+          </div>
+          <div class="tps" style="border:none"><div class="tps-t">Acciones</div>
+            <div style="padding:9px 13px">
+              <button class="tact-btn primary" onclick="tapaGuardar()">💾 Guardar tapa</button>
+              <button class="tact-btn" onclick="tapaPrevisualizarRevista()">👁 Previsualizar revista</button>
+              <button class="tact-btn danger" onclick="tapaReset()">Reiniciar canvas</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
-  `;
+  </div>`;
 
-  // Cargar datos de la primera edición
-  cargarDatosTapa(firstEd.id);
-
-  // Live preview al escribir
-  ['tapa-titulo','tapa-subtitulo','tapa-mes','tapa-anio','tapa-inst','tapa-hebreo','tapa-logo'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input', actualizarPreviewTapa);
-  });
+  // Inicializar con la primera edición
+  tapaEdId = ediciones[0].id;
+  tapaCargarEdicion(tapaEdId);
+  tapaBindCanvas();
 }
 
-window.cargarDatosTapa = async function(edId) {
+// ── CARGAR DATOS DE EDICIÓN ──────────────────────────────────
+window.tapaCargarEdicion = async function(edId) {
+  tapaEdId = edId;
   const sn = await getDoc(doc(db,'ediciones',edId));
   if (!sn.exists()) return;
   const ed = sn.data();
-  const set = (id,val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
-  set('tapa-img',      ed.portadaImagenUrl||'');
-  set('tapa-titulo',   ed.titulo||'');
-  set('tapa-subtitulo',ed.subtitulo||'');
-  set('tapa-mes',      ed.mes||'');
-  set('tapa-anio',     ed.anio||'');
-  set('tapa-inst',     ed.institucion||'Colegio Rabino Iosef Caro');
-  set('tapa-hebreo',   ed.hebreo||'בס״ד');
-  set('tapa-logo',     ed.logoUrl||'https://i.ibb.co/hF7Sqzw5/Logo-blanco.png');
-  actualizarPreviewTapa();
+
+  // Si la edición tiene diseño de tapa guardado, cargarlo
+  if (ed.tapaElementos && Array.isArray(ed.tapaElementos) && ed.tapaElementos.length) {
+    tapaEls = ed.tapaElementos.map(e=>({...e, id:tapaBid()}));
+  } else {
+    // Crear diseño default con los datos de la edición
+    tapaInicializar(ed);
+  }
+
+  // Fondo
+  if (ed.tapaBgUrl) {
+    const inp = document.getElementById('tapa-bg-url');
+    if (inp) inp.value = ed.tapaBgUrl;
+    tapaBgUrl(ed.tapaBgUrl);
+  }
+
+  tapaRenderCanvas();
+  tapaRenderProps();
 };
 
-function driveUrlAdmin(url) {
-  if (!url) return '';
-  const m = url.match(/\/d\/([^/?#]+)/);
-  if (m) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  return url;
+function tapaInicializar(ed) {
+  tapaEls = [
+    { id:tapaBid(), tipo:'estrella', ...JSON.parse(JSON.stringify(TAPA_TIPOS.estrella.d)) },
+    { id:tapaBid(), tipo:'logo',     ...JSON.parse(JSON.stringify(TAPA_TIPOS.logo.d)), src: ed?.logoUrl||TAPA_TIPOS.logo.d.src },
+    { id:tapaBid(), tipo:'badge',    ...JSON.parse(JSON.stringify(TAPA_TIPOS.badge.d)), text:`Edición ${ed?.numero||''}${ed?.mes?' · '+ed.mes:''}${ed?.anio?' '+ed.anio:''}` },
+    { id:tapaBid(), tipo:'linea',    ...JSON.parse(JSON.stringify(TAPA_TIPOS.linea.d)) },
+    { id:tapaBid(), tipo:'titulo',   ...JSON.parse(JSON.stringify(TAPA_TIPOS.titulo.d)), text: ed?.titulo||'Revista Institucional' },
+    { id:tapaBid(), tipo:'subtitulo',...JSON.parse(JSON.stringify(TAPA_TIPOS.subtitulo.d)), text: ed?.subtitulo||'"Formamos Iehudim íntegros para el mañana"' },
+    { id:tapaBid(), tipo:'hebreo',   ...JSON.parse(JSON.stringify(TAPA_TIPOS.hebreo.d)), text: ed?.hebreo||'בונים יהודים שלמים למחר' },
+    { id:tapaBid(), tipo:'meta',     ...JSON.parse(JSON.stringify(TAPA_TIPOS.meta.d)) },
+  ];
 }
 
-window.previewTapaImg = function() {
-  const url = driveUrlAdmin(document.getElementById('tapa-img').value.trim());
-  const prev = document.getElementById('tapa-img-preview');
-  if (!url) { prev.style.display='none'; return; }
-  prev.src = url; prev.style.display='block';
-  // también actualizar preview lateral
-  actualizarPreviewTapa();
+// ── PANEL TABS ───────────────────────────────────────────────
+window.tapaPanelTab = function(tab) {
+  document.querySelectorAll('.tptab').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.tpc').forEach(c=>c.classList.remove('on'));
+  document.getElementById('tptab-'+tab).classList.add('on');
+  document.getElementById('tpc-'+tab).classList.add('on');
 };
 
-function actualizarPreviewTapa() {
-  const g = id => document.getElementById(id)?.value||'';
-  const imgUrl = driveUrlAdmin(g('tapa-img'));
-  const prevImg = document.getElementById('tapa-prev-img');
-  if (imgUrl) { prevImg.src=imgUrl; prevImg.style.display='block'; }
-  else prevImg.style.display='none';
+// ── AGREGAR ELEMENTO ─────────────────────────────────────────
+window.tapaAddEl = function(tipo) {
+  const el = { id:tapaBid(), tipo, ...JSON.parse(JSON.stringify(TAPA_TIPOS[tipo].d)) };
+  tapaEls.push(el);
+  tapaRenderCanvas();
+  tapaSelect(el.id);
+  tapaPanelTab('props');
+};
 
-  const logo = g('tapa-logo');
-  const logoEl = document.getElementById('tapa-prev-logo');
-  if (logoEl) { logoEl.src=logo; logoEl.onerror=()=>logoEl.style.display='none'; }
-
-  const setT=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val;};
-  setT('tapa-prev-titulo',   g('tapa-titulo')||'Revista Institucional');
-  setT('tapa-prev-subtitulo',g('tapa-subtitulo')||'"Formamos Iehudim íntegros para el mañana"');
-  setT('tapa-prev-inst',     g('tapa-inst')||'Colegio Rabino Iosef Caro');
-  setT('tapa-prev-hebreo',   g('tapa-hebreo')||'בס״ד');
-  const mes=g('tapa-mes'); const anio=g('tapa-anio');
-  setT('tapa-prev-badge', `Edición ${document.getElementById('tapa-ed-select')?.selectedOptions[0]?.textContent?.split('—')[0]?.trim()||''}${mes?' · '+mes:''} ${anio}`);
+// ── RENDER CANVAS ────────────────────────────────────────────
+function tapaRenderCanvas() {
+  const canvas = document.getElementById('tapa-canvas');
+  if (!canvas) return;
+  canvas.querySelectorAll('.tel').forEach(e=>e.remove());
+  tapaEls.forEach(el => {
+    const div = document.createElement('div');
+    div.className = 'tel'+(el.id===tapaSelId?' sel':'');
+    div.id = 'tel-'+el.id;
+    div.style.cssText = `left:${el.x}%;top:${el.y}%;width:${el.w}%;height:${el.h}%`;
+    div.innerHTML = tapaElHTML(el)+`
+      <div class="sel-b"></div>
+      <div class="trh trh-tl" data-c="tl"></div><div class="trh trh-tr" data-c="tr"></div>
+      <div class="trh trh-bl" data-c="bl"></div><div class="trh trh-br" data-c="br"></div>`;
+    div.addEventListener('pointerdown', tapaEvDrag);
+    div.querySelectorAll('.trh').forEach(h=>h.addEventListener('pointerdown', tapaEvResize));
+    div.addEventListener('dblclick', tapaEvDblClick);
+    canvas.appendChild(div);
+  });
+  tapaRenderList();
 }
 
-window.guardarTapa = async function() {
-  const edId = document.getElementById('tapa-ed-select')?.value;
+function tapaElHTML(el) {
+  if (el.tipo==='linea')
+    return `<div style="width:100%;height:100%;background:linear-gradient(90deg,transparent 0%,#C9A84C 20%,#F5EDD0 50%,#C9A84C 80%,transparent 100%);border-radius:1px"></div>`;
+  if (el.tipo==='estrella')
+    return `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:${el.fs||220}px;color:${el.color||'rgba(201,168,76,.06)'};line-height:1;pointer-events:none;user-select:none">✡</div>`;
+  if (el.tipo==='imagen') {
+    const u = tapaImgUrl(el.src||'');
+    return u ? `<img src="${u}" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.opacity='.2'">` :
+      `<div style="width:100%;height:100%;border:1px dashed rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-size:10px;color:rgba(201,168,76,.5)">Imagen de fondo</div>`;
+  }
+  if (el.tipo==='logo') {
+    return el.src
+      ? `<img src="${el.src}" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.style.opacity='.2'">`
+      : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.1);font-size:9px;color:rgba(201,168,76,.7);font-weight:700;border-radius:2px">LOGO</div>`;
+  }
+  const fam = (el.tipo==='titulo'||el.tipo==='subtitulo'||el.tipo==='hebreo') ? "'Playfair Display',serif" : "'Lato',sans-serif";
+  const dir = el.tipo==='hebreo' ? 'rtl' : 'ltr';
+  const s   = `width:100%;height:100%;overflow:hidden;font-size:${el.fs||14}px;color:${el.color||'#fff'};font-weight:${el.fw||'400'};font-style:${el.fi||'normal'};text-align:${el.ta||'left'};line-height:1.25;white-space:pre-wrap;word-break:break-word;font-family:${fam};direction:${dir}`;
+  return `<div class="tel-inner" style="${s}">${(el.text||'').replace(/\n/g,'<br>')}</div>`;
+}
+
+// ── LISTA DE CAPAS ───────────────────────────────────────────
+function tapaRenderList() {
+  const list = document.getElementById('tapa-el-list');
+  if (!list) return;
+  if (!tapaEls.length) { list.innerHTML='<div class="tp-no-sel">Agregá elementos con los botones de arriba</div>'; return; }
+  list.innerHTML = [...tapaEls].reverse().map(el=>`
+    <div class="teli${el.id===tapaSelId?' on':''}" onclick="tapaSelect('${el.id}');tapaPanelTab('props')">
+      <span style="font-size:12px;width:15px;text-align:center">${TAPA_TIPOS[el.tipo]?.icon||'·'}</span>
+      <span>${TAPA_TIPOS[el.tipo]?.label||el.tipo}</span>
+      <span class="teli-del" onclick="event.stopPropagation();tapaDelEl('${el.id}')" title="Eliminar">×</span>
+    </div>`).join('');
+}
+
+// ── SELECCIÓN ────────────────────────────────────────────────
+function tapaSelect(id) {
+  tapaSelId = id;
+  tapaRenderCanvas();
+  tapaRenderProps();
+}
+window.tapaSelect = tapaSelect;
+
+window.tapaDelEl = function(id) {
+  tapaEls = tapaEls.filter(e=>e.id!==id);
+  if (tapaSelId===id) { tapaSelId=null; }
+  tapaRenderCanvas(); tapaRenderProps();
+};
+
+// ── BIND CANVAS EVENTS ───────────────────────────────────────
+function tapaBindCanvas() {
+  const canvas = document.getElementById('tapa-canvas');
+  if (!canvas) return;
+  canvas.addEventListener('pointerdown', e=>{
+    if (e.target===canvas||e.target.classList.contains('tc-grid')||e.target.classList.contains('tc-overlay')){
+      tapaSelId=null; tapaRenderCanvas(); tapaRenderProps();
+    }
+  });
+}
+
+// ── DRAG ─────────────────────────────────────────────────────
+function tapaEvDrag(e) {
+  if (e.target.classList.contains('trh')) return;
+  e.stopPropagation();
+  const id = this.id.replace('tel-','');
+  const el = tapaEls.find(x=>x.id===id);
+  if (!el) return;
+  const cr = document.getElementById('tapa-canvas').getBoundingClientRect();
+  tapaSelect(id);
+  tapaDragSt = { id, sx:e.clientX, sy:e.clientY, ox:el.x, oy:el.y, cw:cr.width, ch:cr.height };
+  this.setPointerCapture(e.pointerId);
+  window.addEventListener('pointermove', tapaOnDragMove);
+  window.addEventListener('pointerup', tapaOnDragUp, {once:true});
+}
+function tapaOnDragMove(e) {
+  if (!tapaDragSt) return;
+  const el = tapaEls.find(x=>x.id===tapaDragSt.id); if (!el) return;
+  el.x = Math.max(0, Math.min(95, tapaDragSt.ox + (e.clientX-tapaDragSt.sx)/tapaDragSt.cw*100));
+  el.y = Math.max(0, Math.min(95, tapaDragSt.oy + (e.clientY-tapaDragSt.sy)/tapaDragSt.ch*100));
+  const div = document.getElementById('tel-'+el.id);
+  if (div) { div.style.left=el.x+'%'; div.style.top=el.y+'%'; }
+  tapaSyncSliders(el);
+}
+function tapaOnDragUp() {
+  tapaDragSt=null;
+  window.removeEventListener('pointermove', tapaOnDragMove);
+  tapaRenderProps();
+}
+
+// ── RESIZE ───────────────────────────────────────────────────
+function tapaEvResize(e) {
+  e.stopPropagation();
+  const div = this.closest('.tel');
+  const id  = div.id.replace('tel-','');
+  const el  = tapaEls.find(x=>x.id===id);
+  const cr  = document.getElementById('tapa-canvas').getBoundingClientRect();
+  const c   = this.dataset.c;
+  tapaResSt = { id, c, sx:e.clientX, sy:e.clientY, ow:el.w, oh:el.h, ox:el.x, oy:el.y, cw:cr.width, ch:cr.height };
+  tapaSelect(id);
+  this.setPointerCapture(e.pointerId);
+  window.addEventListener('pointermove', tapaOnResizeMove);
+  window.addEventListener('pointerup', tapaOnResizeUp, {once:true});
+}
+function tapaOnResizeMove(e) {
+  if (!tapaResSt) return;
+  const el=tapaEls.find(x=>x.id===tapaResSt.id); if(!el) return;
+  const dx=(e.clientX-tapaResSt.sx)/tapaResSt.cw*100;
+  const dy=(e.clientY-tapaResSt.sy)/tapaResSt.ch*100;
+  const c=tapaResSt.c;
+  if(c==='br'){el.w=Math.max(3,tapaResSt.ow+dx);el.h=Math.max(1,tapaResSt.oh+dy);}
+  else if(c==='bl'){const nw=Math.max(3,tapaResSt.ow-dx);el.x=tapaResSt.ox+tapaResSt.ow-nw;el.w=nw;el.h=Math.max(1,tapaResSt.oh+dy);}
+  else if(c==='tr'){el.w=Math.max(3,tapaResSt.ow+dx);const nh=Math.max(1,tapaResSt.oh-dy);el.y=tapaResSt.oy+tapaResSt.oh-nh;el.h=nh;}
+  else if(c==='tl'){const nw=Math.max(3,tapaResSt.ow-dx);const nh=Math.max(1,tapaResSt.oh-dy);el.x=tapaResSt.ox+tapaResSt.ow-nw;el.y=tapaResSt.oy+tapaResSt.oh-nh;el.w=nw;el.h=nh;}
+  const div=document.getElementById('tel-'+el.id);
+  if(div){div.style.left=el.x+'%';div.style.top=el.y+'%';div.style.width=el.w+'%';div.style.height=el.h+'%';}
+  tapaSyncSliders(el);
+}
+function tapaOnResizeUp() {
+  tapaResSt=null;
+  window.removeEventListener('pointermove', tapaOnResizeMove);
+  tapaRenderProps();
+}
+
+// ── DOBLE CLIC = EDITAR TEXTO ────────────────────────────────
+function tapaEvDblClick() {
+  const id  = this.id.replace('tel-','');
+  const el  = tapaEls.find(x=>x.id===id);
+  if (!el||!('text' in el)) return;
+  const inner = this.querySelector('.tel-inner');
+  if (!inner) return;
+  inner.contentEditable='true';
+  inner.style.outline='2px solid rgba(201,168,76,.6)';
+  inner.style.outlineOffset='2px';
+  inner.focus();
+  const sel=window.getSelection(),r=document.createRange();
+  r.selectNodeContents(inner);sel.removeAllRanges();sel.addRange(r);
+  const done=()=>{
+    inner.contentEditable='false';
+    inner.style.outline='none';
+    el.text=inner.innerText;
+    tapaRenderProps();
+  };
+  inner.addEventListener('blur',done,{once:true});
+  inner.addEventListener('keydown',ke=>{if(ke.key==='Escape')inner.blur();});
+}
+
+// ── PROPIEDADES ──────────────────────────────────────────────
+function tapaRenderProps() {
+  const el  = tapaEls.find(x=>x.id===tapaSelId);
+  const box = document.getElementById('tapa-props-body');
+  if (!box) return;
+  if (!el) { box.innerHTML='<div class="tp-no-sel">Seleccioná un elemento en la tapa para ver sus propiedades</div>'; return; }
+  const T = TAPA_TIPOS[el.tipo];
+  let h = `<div class="tps"><div class="tps-t">${T.icon} ${T.label}</div><div class="tps-b">`;
+
+  // Posición y tamaño (siempre)
+  h += tapaSlider(el.id,'x',el.x,0,97,.5,'Pos X','%','tvx');
+  h += tapaSlider(el.id,'y',el.y,0,96,.5,'Pos Y','%','tvy');
+  h += tapaSlider(el.id,'w',el.w,2,100,.5,'Ancho','%','tvw');
+  h += tapaSlider(el.id,'h',el.h,.3,100,.3,'Alto','%','tvh');
+
+  h += `</div></div>`;
+
+  // Propiedades específicas por tipo
+  if (el.tipo==='logo'||el.tipo==='imagen') {
+    h += `<div class="tps"><div class="tps-t">Imagen</div><div class="tps-b">
+      <div class="trow"><span class="trow-lbl">URL</span><input type="text" value="${esc(el.src||'')}" placeholder="https://…" oninput="tapaUpd('${el.id}','src',this.value)"></div>
+    </div></div>`;
+  } else if (el.tipo==='estrella') {
+    const op = Math.round((parseFloat(el.color?.match(/[\d.]+(?=\))/)?.[0])||.06)*100);
+    h += `<div class="tps"><div class="tps-t">Estrella decorativa</div><div class="tps-b">
+      ${tapaSlider(el.id,'fs',el.fs||220,40,500,10,'Tamaño','px','tsz')}
+      <div class="trow"><span class="trow-lbl">Opacidad</span>
+        <input type="range" min="1" max="30" value="${op}" step="1"
+          oninput="tapaUpdEst('${el.id}',this.value/100);document.getElementById('top').textContent=this.value+'%'">
+        <span class="trow-val" id="top">${op}%</span>
+      </div>
+    </div></div>`;
+  } else if (el.tipo!=='linea') {
+    h += `<div class="tps"><div class="tps-t">Texto</div><div class="tps-b">
+      <div class="trow" style="align-items:flex-start"><span class="trow-lbl" style="padding-top:4px">Texto</span>
+        <textarea oninput="tapaUpd('${el.id}','text',this.value)">${esc(el.text||'')}</textarea></div>
+      ${tapaSlider(el.id,'fs',el.fs||14,6,80,1,'Tamaño','px','tfs')}
+      <div class="trow"><span class="trow-lbl">Color</span><input type="color" value="${tapaToHex(el.color||'#fff')}" oninput="tapaUpd('${el.id}','color',this.value)"></div>
+      <div class="trow"><span class="trow-lbl">Peso</span>
+        <select onchange="tapaUpd('${el.id}','fw',this.value)">
+          <option value="300" ${el.fw==='300'?'selected':''}>Ligero</option>
+          <option value="400" ${el.fw==='400'?'selected':''}>Normal</option>
+          <option value="700" ${el.fw==='700'?'selected':''}>Negrita</option>
+          <option value="900" ${el.fw==='900'?'selected':''}>Black</option>
+        </select>
+      </div>
+      <div class="trow"><span class="trow-lbl">Estilo</span>
+        <select onchange="tapaUpd('${el.id}','fi',this.value)">
+          <option value="normal" ${el.fi==='normal'?'selected':''}>Normal</option>
+          <option value="italic" ${el.fi==='italic'?'selected':''}>Cursiva</option>
+        </select>
+      </div>
+      <div class="trow"><span class="trow-lbl">Alinear</span>
+        <select onchange="tapaUpd('${el.id}','ta',this.value)">
+          <option value="left"   ${el.ta==='left'  ?'selected':''}>Izquierda</option>
+          <option value="center" ${el.ta==='center'?'selected':''}>Centro</option>
+          <option value="right"  ${el.ta==='right' ?'selected':''}>Derecha</option>
+        </select>
+      </div>
+    </div></div>`;
+  }
+
+  // Orden en capas y eliminar
+  const i = tapaEls.findIndex(x=>x.id===el.id);
+  h += `<div class="tps" style="border:none"><div class="tps-t">Orden / Eliminar</div><div class="tps-b">
+    <div class="trow">
+      <button class="tact-btn" style="margin:0" onclick="tapaMoverEl('${el.id}',-1)" ${i===0?'disabled':''}>↑ Adelante</button>
+      <button class="tact-btn" style="margin:0" onclick="tapaMoverEl('${el.id}',1)"  ${i===tapaEls.length-1?'disabled':''}>↓ Atrás</button>
+    </div>
+    <button class="tact-btn danger" style="margin-top:6px" onclick="tapaDelEl('${el.id}')">Eliminar elemento</button>
+  </div></div>`;
+
+  box.innerHTML = h;
+}
+
+function tapaSlider(id, prop, val, min, max, step, label, unit, vid) {
+  const v = Math.round(val*10)/10;
+  return `<div class="trow"><span class="trow-lbl">${label}</span>
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${v}"
+      oninput="tapaUpd('${id}','${prop}',+this.value);document.getElementById('${vid}').textContent=Math.round(this.value*10)/10+'${unit}'">
+    <span class="trow-val" id="${vid}">${Math.round(v)}${unit}</span>
+  </div>`;
+}
+
+function tapaSyncSliders(el) {
+  const sv=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=Math.round(v)+'%';};
+  sv('tvx',el.x);sv('tvy',el.y);sv('tvw',el.w);sv('tvh',el.h);
+}
+
+// ── UPDATE ELEMENTO ──────────────────────────────────────────
+window.tapaUpd = function(id, prop, val) {
+  const el = tapaEls.find(x=>x.id===id); if (!el) return;
+  el[prop] = val;
+  const div = document.getElementById('tel-'+id);
+  if (div) {
+    div.style.left=el.x+'%';div.style.top=el.y+'%';
+    div.style.width=el.w+'%';div.style.height=el.h+'%';
+    div.querySelectorAll(':scope > *:not(.trh):not(.sel-b)').forEach(c=>c.remove());
+    const tmp=document.createElement('div');
+    tmp.innerHTML=tapaElHTML(el);
+    div.prepend(tmp.firstChild||tmp);
+  }
+};
+
+window.tapaUpdEst = function(id, op) {
+  tapaUpd(id,'color',`rgba(201,168,76,${op.toFixed(2)})`);
+};
+
+window.tapaMoverEl = function(id, dir) {
+  const i=tapaEls.findIndex(x=>x.id===id);
+  const j=i+dir;
+  if(j<0||j>=tapaEls.length) return;
+  [tapaEls[i],tapaEls[j]]=[tapaEls[j],tapaEls[i]];
+  tapaRenderCanvas(); tapaRenderProps();
+};
+
+// ── FONDO ────────────────────────────────────────────────────
+window.tapaBgUrl = function(url) {
+  const u = tapaImgUrl(url);
+  const canvas = document.getElementById('tapa-canvas'); if (!canvas) return;
+  let bgImg = canvas.querySelector('.tc-bg-img');
+  if (u) {
+    if (!bgImg) {
+      bgImg = document.createElement('img');
+      bgImg.className = 'tc-bg-img';
+      bgImg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0';
+      canvas.insertBefore(bgImg, canvas.firstChild);
+    }
+    bgImg.src = u;
+    bgImg.onerror = ()=>bgImg.style.opacity='.2';
+  } else if (bgImg) { bgImg.remove(); }
+};
+
+window.tapaSetOverlay = function(op) {
+  const ov = document.getElementById('tc-overlay'); if (!ov) return;
+  ov.style.background = `linear-gradient(180deg,rgba(14,22,40,${(op*.2).toFixed(2)}) 0%,rgba(14,22,40,${(op*.9).toFixed(2)}) 50%,rgba(14,22,40,${Math.min(1,op*2.2).toFixed(2)}) 100%)`;
+};
+
+window.tapaBgGrad = function() {
+  const c1=document.querySelectorAll('#tpc-fondo input[type=color]')[0]?.value||'#0E1628';
+  const c2=document.querySelectorAll('#tpc-fondo input[type=color]')[1]?.value||'#1A2848';
+  const c3=document.querySelectorAll('#tpc-fondo input[type=color]')[2]?.value||'#1E3060';
+  const canvas=document.getElementById('tapa-canvas');
+  if (canvas) canvas.style.background=`linear-gradient(165deg,${c1} 0%,${c2} 60%,${c3} 100%)`;
+  document.getElementById('bgc1').textContent=c1;
+  document.getElementById('bgc2').textContent=c2;
+  document.getElementById('bgc3').textContent=c3;
+};
+
+// ── GUARDAR EN FIRESTORE ─────────────────────────────────────
+window.tapaGuardar = async function() {
+  const edId = document.getElementById('tapa-ed-sel')?.value || tapaEdId;
   if (!edId) { toast('Seleccioná una edición','err'); return; }
-  const g = id => document.getElementById(id)?.value?.trim()||'';
   try {
     await updateDoc(doc(db,'ediciones',edId), {
-      portadaImagenUrl: g('tapa-img'),
-      titulo:           g('tapa-titulo'),
-      subtitulo:        g('tapa-subtitulo'),
-      mes:              g('tapa-mes'),
-      anio:             g('tapa-anio'),
-      institucion:      g('tapa-inst'),
-      hebreo:           g('tapa-hebreo'),
-      logoUrl:          g('tapa-logo'),
-      actualizadoEn:    serverTimestamp(),
+      tapaElementos:  tapaEls,
+      tapaBgUrl:      document.getElementById('tapa-bg-url')?.value?.trim()||'',
+      actualizadoEn:  serverTimestamp(),
     });
     toast('Tapa guardada ✓');
   } catch(e) { toast('Error: '+e.message,'err'); }
 };
 
-window.previsualizarRevista = function() {
-  const edId = document.getElementById('tapa-ed-select')?.value;
+window.tapaPrevisualizarRevista = function() {
+  const edId = document.getElementById('tapa-ed-sel')?.value || tapaEdId;
   if (!edId) return;
   window.open(`index.html?previewEdicion=${edId}`,'_blank');
 };
+
+window.tapaReset = function() {
+  if (!confirm('¿Reiniciar el diseño de la tapa? Se perderán los cambios sin guardar.')) return;
+  tapaEls=[]; tapaSelId=null;
+  tapaInicializar({});
+  tapaRenderCanvas(); tapaRenderProps();
+};
+
+// ── HELPERS ──────────────────────────────────────────────────
+function tapaImgUrl(url) {
+  if (!url) return '';
+  const m=url.match(/\/d\/([^/?#]+)/);
+  return m?`https://drive.google.com/uc?export=view&id=${m[1]}`:url;
+}
+function tapaToHex(c) {
+  if (!c) return '#ffffff';
+  if (c.startsWith('#')) return c;
+  const m=c.match(/\d+/g);
+  if (!m||m.length<3) return '#C9A84C';
+  return '#'+[m[0],m[1],m[2]].map(n=>parseInt(n).toString(16).padStart(2,'0')).join('');
+}
+
+// También actualizar index.html para renderizar tapaElementos
+// cuando estén presentes en la edición (la revista ya tiene esto en buildPortada)
 </script>
 </body>
 </html>
