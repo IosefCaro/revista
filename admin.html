@@ -1323,10 +1323,11 @@ function htmlBloque(b, i, total) {
             data-placeholder="Escribí el contenido acá…"
             oninput="bloques.find(x=>x.id==='${b.id}').html=this.innerHTML;marcarCambio()"
             onkeydown="if(event.key==='Tab'){event.preventDefault();document.execCommand('insertHTML',false,'&nbsp;&nbsp;&nbsp;&nbsp;')}"
-            onload="setupPegadoLimpio(this)"
-          >${b.html||'<p></p>'}</div>
+          ></div>
         </div>
       </div>`;
+    // Nota: el contenido html se inyecta con setRteContent() después del render
+  }
   }
 
   if (b.tipo === 'imagen') {
@@ -2095,14 +2096,21 @@ function renderBloquesEditor() {
     return;
   }
   cont.innerHTML = bloques.map((b,i)=>htmlBloque(b,i,bloques.length)).join('');
-  // Configurar pegado limpio en todos los editores ricos
+  // Inyectar contenido de los RTE de forma segura (evita problemas con backticks/${ en el html)
+  bloques.forEach(b => {
+    if (b.tipo === 'texto') {
+      const el = document.getElementById('rte-'+b.id);
+      if (el) el.innerHTML = b.html || '<p></p>';
+    }
+  });
+  // Configurar pegado limpio
   cont.querySelectorAll('.rte-body').forEach(el => setupPegadoLimpio(el));
-  // Activar drag & drop entre bloques
+  // Drag & drop entre bloques
   setupBloquesDragDrop();
-  // Actualizar preview y contadores
+  // Preview y contadores
   actualizarPreviewEditor();
   actualizarStatusBar();
-  // Inicializar canvas de artículo si el modal ya lo tiene
+  // Canvas de artículo
   setTimeout(() => { if (window.artcanInitFromBloques) artcanInitFromBloques(); }, 80);
 }
 
