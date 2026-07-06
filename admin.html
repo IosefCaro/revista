@@ -659,9 +659,11 @@ onAuthStateChanged(auth, user => {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     document.getElementById('user-email').textContent = '👤 ' + user.email;
-    setTab('revision');
-    cargarNotifCount();
-  } else {
+    if (!window._adminLocal) { // solo inicializar si no fue login local
+      setTab('revision');
+      cargarNotifCount();
+    }
+  } else if (!window._adminLocal) {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
   }
@@ -675,20 +677,47 @@ window.doLogin = async function() {
   if (!email || !pass) { mostrarErr(errEl, 'Completá email y contraseña'); return; }
   btn.textContent = 'Ingresando…'; btn.disabled = true;
   errEl.style.display = 'none';
+
+  // ── Login local hardcodeado (funciona sin Firebase Auth activo) ──
+  const ADMINS = [
+    { user: 'iosefcaro',                   pass: '123456' },
+    { user: 'Iosefcaro',                   pass: '123456' },
+    { user: 'admin@iosefcaro.edu.ar',      pass: '123456' },
+    { user: 'iosefcaro@iosefcaro.edu.ar',  pass: '123456' },
+    { user: 'info@iosefcaro.org',          pass: 'Iosefcaro2026' },
+  ];
+  const match = ADMINS.find(a => a.user.toLowerCase() === email.toLowerCase() && a.pass === pass);
+  if (match) {
+    window._adminLocal = true;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('user-email').textContent = '👤 ' + email;
+    setTab('revision'); cargarNotifCount();
+    return;
+  }
+
+  // ── Fallback: Firebase Auth ──
   try {
     await signInWithEmailAndPassword(auth, email, pass);
   } catch (e) {
     const msgs = {
-      'auth/invalid-credential':'Email o contraseña incorrectos.',
+      'auth/invalid-credential':'Usuario o contraseña incorrectos.',
       'auth/too-many-requests':'Demasiados intentos. Esperá unos minutos.',
+      'auth/user-not-found':'Usuario no encontrado.',
+      'auth/wrong-password':'Contraseña incorrecta.',
     };
-    mostrarErr(errEl, msgs[e.code] || 'Error: ' + e.message);
+    mostrarErr(errEl, msgs[e.code] || 'Usuario o contraseña incorrectos.');
     btn.textContent = 'Ingresar →'; btn.disabled = false;
   }
 };
 
 window.doLogout = async function() {
-  await signOut(auth);
+  window._adminLocal = false;
+  try { await signOut(auth); } catch(e) {}
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
 };
 
 // ═══ TABS ════════════════════════════════════════════════════
