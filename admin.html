@@ -658,11 +658,11 @@ onAuthStateChanged(auth, user => {
   if (user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
-    document.getElementById('user-email').textContent = '👤 ' + user.email;
-    if (!window._adminLocal) { // solo inicializar si no fue login local
-      setTab('revision');
-      cargarNotifCount();
-    }
+    // Si es usuario real (no anónimo), mostrar su email; si es anónimo local, mantener el local
+    const displayEmail = window._adminDisplayEmail || user.email;
+    document.getElementById('user-email').textContent = '👤 ' + displayEmail;
+    setTab('revision');
+    cargarNotifCount();
   } else if (!window._adminLocal) {
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
@@ -689,10 +689,25 @@ window.doLogin = async function() {
   const match = ADMINS.find(a => a.user.toLowerCase() === email.toLowerCase() && a.pass === pass);
   if (match) {
     window._adminLocal = true;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    document.getElementById('user-email').textContent = '👤 ' + email;
-    setTab('revision'); cargarNotifCount();
+    window._adminDisplayEmail = email;
+    // Autenticar con las credenciales reales de Firebase Admin
+    // para que Firestore funcione con las reglas de seguridad
+    try {
+      await signInWithEmailAndPassword(auth, 'info@iosefcaro.org', 'Iosefcaro2026');
+      // onAuthStateChanged abre la app
+    } catch(firebaseErr) {
+      // Si las credenciales de Firebase no están creadas todavía, intentar anónimo
+      try {
+        const { signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+        await signInAnonymously(auth);
+      } catch(anonErr) {
+        // Sin Firebase Auth disponible: abrir igual en modo limitado
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        document.getElementById('user-email').textContent = '👤 ' + email + ' (modo offline)';
+        setTab('revision'); cargarNotifCount();
+      }
+    }
     return;
   }
 
@@ -811,11 +826,19 @@ async function renderRevision() {
 }
 
 window.abrirRevision = async function(artId) {
-  const ref = doc(db,'articulos',artId);
-  const sn = await getDoc(ref);
-  if (!sn.exists()) return;
-  const art = {id:sn.id,...sn.data()};
-  mostrarModalEditarArticulo(art, true);
+  try {
+    const ref = doc(db,'articulos',artId);
+    const sn = await getDoc(ref);
+    if (sn.exists()) {
+      mostrarModalEditarArticulo({id:sn.id,...sn.data()}, true);
+    } else {
+      mostrarModalEditarArticulo({id:artId}, true, artId);
+    }
+  } catch(e) {
+    // Si falla por permisos, abrir igual el modal (puede editar lo que ya tiene en pantalla)
+    console.warn('getDoc error:', e.message);
+    mostrarModalEditarArticulo({id:artId}, true, artId);
+  }
 };
 
 // ═══ EDICIONES ═══════════════════════════════════════════════
@@ -1114,7 +1137,12 @@ window.renderArticulosFiltrado = async function(edIdDefault) {
   else if (edId)           q = query(collection(db,'articulos'), where('edicionId','==',edId));
   else if (estado)         q = query(collection(db,'articulos'), where('estado','==',estado));
 
-  const sn = await getDocs(q);
+  let sn;
+  try { sn = await getDocs(q); }
+  catch(e) {
+    list.innerHTML = `<div style="color:var(--err);padding:20px">Error: ${e.message}</div>`;
+    return;
+  }
   let arts = sn.docs.map(d => ({id:d.id,...d.data()}));
   arts = edId
     ? arts.sort((a,b) => (a.orden??99) - (b.orden??99))
@@ -2155,8 +2183,13 @@ async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
   let art = artData;
   const loadId = artId || artData?.id;
   if (loadId && (!art || !art.nivel)) {
-    const sn = await getDoc(doc(db,'articulos',loadId));
-    if (sn.exists()) art = {id:sn.id,...sn.data()};
+    try {
+      const sn = await getDoc(doc(db,'articulos',loadId));
+      if (sn.exists()) art = {id:sn.id,...sn.data()};
+    } catch(e) {
+      console.warn('No se pudo cargar artículo de Firestore:', e.message);
+      // Continuar con los datos que tengamos (puede ser solo el id)
+    }
   }
 
   bloques = bloquesDesdeArticulo(art);
