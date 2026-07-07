@@ -827,17 +827,15 @@ async function renderRevision() {
 
 window.abrirRevision = async function(artId) {
   try {
-    const ref = doc(db,'articulos',artId);
-    const sn = await getDoc(ref);
+    const sn = await getDoc(doc(db,'articulos',artId));
     if (sn.exists()) {
-      mostrarModalEditarArticulo({id:sn.id,...sn.data()}, true);
+      window.mostrarModalEditarArticulo({id:sn.id,...sn.data()}, true);
     } else {
-      mostrarModalEditarArticulo({id:artId}, true, artId);
+      window.mostrarModalEditarArticulo({id:artId}, true, artId);
     }
   } catch(e) {
-    // Si falla por permisos, abrir igual el modal (puede editar lo que ya tiene en pantalla)
-    console.warn('getDoc error:', e.message);
-    mostrarModalEditarArticulo({id:artId}, true, artId);
+    console.warn('abrirRevision error:', e.message);
+    window.mostrarModalEditarArticulo({id:artId}, true, artId);
   }
 };
 
@@ -2172,7 +2170,18 @@ function renderBloquesEditor() {
 
 // ═══ MODAL ARTÍCULO (editar / revisar) ═══════════════════════
 window.abrirModalArticulo = async function(artId) {
-  mostrarModalEditarArticulo(artId ? {id:artId} : null, false, artId);
+  if (artId) {
+    try {
+      const sn = await getDoc(doc(db,'articulos',artId));
+      const art = sn.exists() ? {id:sn.id,...sn.data()} : {id:artId};
+      window.mostrarModalEditarArticulo(art, false);
+    } catch(e) {
+      console.warn('abrirModalArticulo error:', e.message);
+      window.mostrarModalEditarArticulo({id:artId}, false, artId);
+    }
+  } else {
+    window.mostrarModalEditarArticulo(null, false);
+  }
 };
 
 async function mostrarModalEditarArticulo(artData, modoRevision, artId) {
@@ -3828,10 +3837,11 @@ window.duplicarBloque         = duplicarBloque;
 window.prevImgBloque          = prevImgBloque;
 window.insertarPullQuote      = insertarPullQuote;
 window.rteCmd                 = rteCmd;
-window.abrirRevision          = abrirRevision;
-window.rechazarArticulo       = rechazarArticulo;
-window.eliminarArticulo       = eliminarArticulo;
-window.guardarArticulo        = guardarArticulo;
+window.abrirRevision               = abrirRevision;
+window.rechazarArticulo            = rechazarArticulo;
+window.eliminarArticulo            = eliminarArticulo;
+window.guardarArticulo             = guardarArticulo;
+window.mostrarModalEditarArticulo  = mostrarModalEditarArticulo;
 
 </script>
 </body>
